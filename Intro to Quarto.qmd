@@ -1,0 +1,88 @@
+---
+title: "Getting Started with Quarto"
+author: "Marc Weber"
+format: revealjs
+editor: visual
+---
+
+## Why Quarto?
+
+Quarto enables you to weave together content and executable code into a finished presentation.
+
+-   Compute-agnostic (doesn't require R)
+
+-   Ecosystem of packages (in R) replaced by single framework
+
+## Rendering
+
+You can render in Quarto by:
+
+1.  Clicking![render](images/render.png) button in RStudio Editor pane
+2.  Using the quarto package:
+    1.  `quarto::quarto_render(input=__, output=__)`
+3.  Use as command line tool at terminal:
+    1.  `quarto render <input> --to <format>`
+
+## Columns
+
+They're easy now! Use the visual editor
+
+::: columns
+::: {.column width="30%"}
+```{r, echo=TRUE}
+data(cars)
+library(dplyr)
+glimpse(cars)
+```
+:::
+
+::: {.column width="30%"}
+A random list - item 1 - item 2
+:::
+
+::: {.column width="30%"}
+Another random list - item 1 - item 2
+:::
+:::
+
+## Table
+
+| Col1 | Col2 | Col3 |
+|------|------|------|
+|      |      |      |
+|      |      |      |
+|      |      |      |
+
+: A Table
+
+## Image
+
+![some image](images/thumbnail.png)
+
+## Python
+
+```{python echo=TRUE}
+#| label: fig-polar
+#| fig-cap: "A line plot on a polar axis"
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+r = np.arange(0, 2, 0.01)
+theta = 2 * np.pi * r
+fig, ax = plt.subplots(
+  subplot_kw = {'projection': 'polar'} 
+)
+ax.plot(theta, r)
+ax.set_rticks([0.5, 1, 1.5, 2])
+ax.grid(True)
+plt.show()
+```
+
+## Resources
+
+-   [RStudio Conf 2022](https://github.com/rstudio-conf-2022)
+-   [Data Sandbox Review of Quarto](https://datasandbox.netlify.app/posts/2022-08-01-quarto-the-successor-to-r-markdown/index.html)
+-   [Quarto](https://quarto.org/)
+-   [RStudio Quarto Docs](https://quarto.org/docs/tools/rstudio.html)
+-   [Quarto Tip A Day](https://mine-cetinkaya-rundel.github.io/quarto-tip-a-day/)
