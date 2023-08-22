@@ -1,0 +1,133 @@
+---
+title: "Spatial Group 8/23/2023"
+author: "Marc Weber"
+format: revealjs
+self-contained: true
+editor: visual
+---
+
+## A Little Background
+
+- Originally this meeting was between Ryan and I and GIS contractor starting back in 2015?
+
+- Meeting has evolved over time - now an informal meeting time to discuss spatial topics
+
+- [Teams space for the group](https://teams.microsoft.com/l/entity/com.microsoft.teamspace.tab.wiki/tab::425d8b6b-1959-4006-a9e6-41c5a91ddfd1?context=%7B%22subEntityId%22%3A%22%7B%5C%22pageId%5C%22%3A2%2C%5C%22origin%5C%22%3A2%7D%22%2C%22channelId%22%3A%2219%3A50c2782cfb5041afacdc66f8fec51f93%40thread.skype%22%7D&tenantId=88b378b3-6748-4867-acf9-76aacbeca6a7)
+
+## Topics We've Covered
+
+- Earth Engine workshop - Marc
+- R leaflet / mapview - Ryan / Marc
+- tmap - Amalia / Marc
+- R packages - Michael
+- R StreamNetworkTools - Darin
+- R nhdplusTools - Marc / Amalia
+- Hands-on intro to git - Rick
+- Story Map demo - Jessie
+- Remote sensing libraries in R - Marc
+
+## Topics We've Covered...
+
+- Reprex - Michael
+- Intro to DMAP - Andrew Chase
+- Walk-through /  demo using DMAP - Marc
+- Repetitive tasks in R (apply family) - Darin
+- Using parallel in R - Michael
+- geoconnex - Marc
+- Web services exercise in R/Python - Marc
+- Discussion of current work - Hannah
+- Intro to Quarto - Marc
+
+## Topics We've Covered...
+- Alpine Lakes research - Amalia
+- Using DMAP - Darrin Kopp
+- Modifiable areal unit problem (MAUP) discussion / paper discussion
+- Seasonal and spatial variation in stream nitrate loading - Amalia
+- Qualitative social science and spatial analysis - Marissa
+- Recap on ICRW8 R/Python spatial workshop - Marc
+- All these are listed in [Teams Wiki page for group](https://teams.microsoft.com/l/entity/com.microsoft.teamspace.tab.wiki/tab::425d8b6b-1959-4006-a9e6-41c5a91ddfd1?context=%7B%22subEntityId%22%3A%22%7B%5C%22pageId%5C%22%3A2%2C%5C%22sectionId%5C%22%3A5%2C%5C%22origin%5C%22%3A2%7D%22%2C%22channelId%22%3A%2219%3A50c2782cfb5041afacdc66f8fec51f93%40thread.skype%22%7D&tenantId=88b378b3-6748-4867-acf9-76aacbeca6a7)
+
+## Future Ideas
+
+- Table of future discussion topics [here](https://teams.microsoft.com/l/entity/com.microsoft.teamspace.tab.wiki/tab::425d8b6b-1959-4006-a9e6-41c5a91ddfd1?context=%7B%22subEntityId%22%3A%22%7B%5C%22pageId%5C%22%3A2%2C%5C%22sectionId%5C%22%3A4%2C%5C%22origin%5C%22%3A2%7D%22%2C%22channelId%22%3A%2219%3A50c2782cfb5041afacdc66f8fec51f93%40thread.skype%22%7D&tenantId=88b378b3-6748-4867-acf9-76aacbeca6a7)
+- Include things such as:
+  - spmodel
+  - another Earth Engine Workshop
+  - Dask / parallelization in Python
+  - QGIS Intro
+  - Data Ecosystems
+  - ScienceHub Geospatial
+  - Python geemap, segment-geospatial (SAM model)
+  
+## Reminder of agency GIS resources and groups
+
+- [ORD Geospatial Sciences CoOp](https://teams.microsoft.com/l/channel/19%3a1ee6a984ac0b4d32a7109bc638a85014%40thread.skype/ORD%2520Geospatial?groupId=93022b12-6005-468e-a542-501d13b4caa8&tenantId=88b378b3-6748-4867-acf9-76aacbeca6a7)
+- [EPA Geospatial Teams Channel](https://teams.microsoft.com/l/team/19%3a01dbde32e2da416e8f2ab76409521c0c%40thread.skype/conversations?groupId=8cb556ff-b4b3-4652-bfc7-b42285928d03&tenantId=88b378b3-6748-4867-acf9-76aacbeca6a7) (multiples grops / channels)
+- [Agency Geospatial Landing Page](https://work.epa.gov/geospatial-resources)
+  - Links to tutorials, SEGS, Policies, etc
+- GeoPlatform Webinar Series / Training
+  - Every Monday, contact Kaitlin Kean or Alex O'Neal
+- [R CoP](https://teams.microsoft.com/l/channel/19%3aa6272ef8a55c404ea56fa19145076a3d%40thread.skype/R%2520User%2520Group?groupId=93022b12-6005-468e-a542-501d13b4caa8&tenantId=88b378b3-6748-4867-acf9-76aacbeca6a7)
+- [Python Cop](https://teams.microsoft.com/l/channel/19%3a7d92e05a84bf4cba9c31e38711304cd5%40thread.skype/Python?groupId=93022b12-6005-468e-a542-501d13b4caa8&tenantId=88b378b3-6748-4867-acf9-76aacbeca6a7)
+
+## Some new tools to introduce
+- `QGIS` and `WhiteboxTools` are software / tool suites that offer additional open source GIS tools and functionality above and beyond what is available in COTS software like `ArcPRO`
+- We can have upcoming sessions to do an intro or take a deeper dive into using either of these tools, but there are packages in R to link to both of these:
+- `qgisprocess` and `whitebox` R packages
+
+## `qgisprocess`
+Just a demo of what is available at the `qgisprocess` [GitHub](https://github.com/r-spatial/qgisprocess) site
+
+Run a buffer and dissolve operation on built-in `sf` North Carolina dataset using the native:buffer algorithm from `qgis`
+```{r}
+#| echo: true
+#| code-fold: true
+library(qgisprocess)
+input <- sf::read_sf(system.file("shape/nc.shp", package = "sf"))
+```
+
+## North Carolina features before a buffer / dissolve
+```{r}
+#| echo: true
+plot(input$geometry)
+```
+
+## Run algorithm
+Note the class of the result of the algorithm
+```{r}
+#| echo: true
+result <- qgis_run_algorithm(
+  "native:buffer",
+  INPUT = input,
+  DISTANCE = 1,
+  DISSOLVE = TRUE
+)
+
+result
+```
+
+## Plot the buffer and dissolve results
+We can convert our result to an `sf` object easily
+```{r}
+#| echo: true
+output_sf <- sf::st_as_sf(result)
+plot(sf::st_geometry(output_sf))
+```
+
+## Getting help on a tool
+```{r}
+#| echo: true
+qgisprocess::qgis_show_help("native:buffer")
+```
+
+## Tool search
+```{r}
+#| echo: true
+qgisprocess::qgis_search_algorithms(algorithm = "overlap")
+```
+
+## Available tools
+```{r}
+#| echo: true
+qgis_algorithms()
+```

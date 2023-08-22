@@ -5,45 +5,113 @@ format: revealjs
 editor: visual
 ---
 
-## What is the Modifiable Areal Unit Problem (MAUP)
-
-- When data are gathered according to different boundary definitions, different data sets are generated
-- Analyzing these different data sets will likely provide different results
-- When point-based measures of spatial phenomena are aggregated into districts (i.e. population density or illness rates) resulting summary values (e.g., totals, rates, proportions, densities) are influenced by both the shape and scale of the aggregation unit.
-
-
-## Zoning Effect and Scale Effect
-
-- Zoning effect: number of areal units kept constant but new boundaries drawn to create new configurations or 'zones'
-- Scale effect: Spatial (dis) aggregation - changing the spatial resolution of the data
-
-
-## A worked example
-
-
+## Setup
 ```{r}
 library(tigris)
 library(tidycensus)
-library(tmap)
 library(mapview)
 library(ggplot2)
+library(dplyr)
 mapviewOptions(fgb=FALSE)
-
-pdx <- get_acs(
-  state = "OR",
-  county = "Multnomah",
-  geography = "cbg",
-  variables = "B19013_001",
-  geometry = TRUE,
-  year = 2020
-)
-
-head(pdx)
-
-pdx %>%
-  ggplot(aes(fill = estimate)) + 
-  geom_sf(color = NA) + 
-  scale_fill_viridis_c(option = "magma") 
-
+options(tigris_use_cache = TRUE)
+tigris_cache_dir('C:/Users/mweber/AppData/Local/tidycensus/tidycensus/Cache')
 ```
 
+## What is the Modifiable Areal Unit Problem (MAUP)
+
+-   When data are gathered according to different boundary definitions, different data sets are generated
+-   Analyzing these different data sets will likely provide different results
+-   When point-based measures of spatial phenomena are aggregated into districts (i.e. population density or illness rates) resulting summary values (e.g., totals, rates, proportions, densities) are influenced by both the shape and scale of the aggregation unit.
+
+## Zoning Effect and Scale Effect
+
+-   Zoning effect: number of areal units kept constant but new boundaries drawn to create new configurations or 'zones'
+-   Scale effect: Spatial (dis) aggregation - changing the spatial resolution of the data
+
+## A worked example
+Examples follow basic examples in [tidycensus](https://walker-data.com/tidycensus/articles/spatial-data.html)
+
+### Ethnicity by block in Multnomah County
+```{r}
+library(tigris)
+library(tidycensus)
+library(mapview)
+library(ggplot2)
+library(dplyr)
+mapviewOptions(fgb=FALSE)
+options(tigris_use_cache = TRUE)
+
+racevars <- c(White = "P2_005N", 
+              Black = "P2_006N", 
+              Asian = "P2_008N", 
+              Hispanic = "P2_002N")
+
+pdx_blocks <- get_decennial(
+  geography = "block",
+  variables = racevars,
+  state = "OR",
+  county = "Multnomah County",
+  geometry = TRUE,
+  summary_var = "P2_001N",
+  year = 2020
+) 
+```
+
+```{r}
+pdx_blocks  |> 
+  mutate(percent = 100 * (value / summary_value))   |>  
+  ggplot(aes(fill = percent)) +
+  facet_wrap(~variable) +
+  geom_sf(color = NA) +
+  theme_void() + 
+  scale_fill_viridis_c() + 
+  labs(fill = "% of population\n(2020 Census)")
+```
+
+### Ethnicity by block group in Multnomah County
+```{r}
+pdx_bgs <- get_decennial(
+  geography = "block group",
+  variables = racevars,
+  state = "OR",
+  county = "Multnomah County",
+  geometry = TRUE,
+  summary_var = "P2_001N",
+  year = 2020
+) 
+```
+
+```{r}
+pdx_bgs  |> 
+  mutate(percent = 100 * (value / summary_value))   |>  
+  ggplot(aes(fill = percent)) +
+  facet_wrap(~variable) +
+  geom_sf(color = NA) +
+  theme_void() + 
+  scale_fill_viridis_c() + 
+  labs(fill = "% of population\n(2020 Census)")
+```
+
+### Ethnicity by tract in Multnomah County
+```{r}
+pdx_tracts <- get_decennial(
+  geography = "tract",
+  variables = racevars,
+  state = "OR",
+  county = "Multnomah County",
+  geometry = TRUE,
+  summary_var = "P2_001N",
+  year = 2020
+) 
+```
+
+```{r}
+pdx_tracts  |> 
+  mutate(percent = 100 * (value / summary_value))   |>  
+  ggplot(aes(fill = percent)) +
+  facet_wrap(~variable) +
+  geom_sf(color = NA) +
+  theme_void() + 
+  scale_fill_viridis_c() + 
+  labs(fill = "% of population\n(2020 Census)")
+```
