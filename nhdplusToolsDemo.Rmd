@@ -1,0 +1,101 @@
+---
+title: "nhdplusTools Demo"
+author: "Marc Weber"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+`nhdplusTools` provides a set of tools to:
+
+- Download both NHDPlusV2.1 and NHDPlusHR data
+- Subset NHDPlus data
+  + provide network locatation discovery
+  + network navigation
+  + export utilities for spatial and attribute subseting
+- Indexing
+  + linear and catchment indexing of features to NHDPlus network
+
+## Basic example workflow
+Follows steps in [TL;DR](https://usgs-r.github.io/nhdplusTools/articles/nhdplusTools.html) - load a location or a known gage
+```{r}
+library(nhdplusTools)
+library(sf)
+
+start_point <- st_sfc(st_point(c(-123.283363, 44.536289)), crs = 4269)
+discover_nldi_sources()
+discover_nldi_characteristics()
+start_comid <- discover_nhdplus_id(start_point)
+
+source(system.file("extdata/sample_data.R", package = "nhdplusTools"))
+plot_nhdplus(list(13293970, 13293750)), streamorder = 3, nhdplus_data = sample_data)
+```
+
+`discover_nhdplus_id` will use the `findNLDI` function from the `dataRetrieval` package if presented with an `sf` point feature - if presented with an `nldi` [Network-Linked Data Index](https://waterdata.usgs.gov/blog/nldi-intro/) feature it will use the package `get_nldi_feature` function to find the COMID.
+
+### Use NLDI web services
+Grab upstream flowlines and basin
+```{r}
+library(mapview)
+flowline <- navigate_nldi(list(featureSource = "comid", featureID = start_comid), mode = "upstreamTributaries", distance_km = 100)
+basin <- get_nldi_basin(list(featureSource = "comid", featureID = start_comid))
+# we can get this basin in a browser window as well with the NLDI API - try this: 
+# https://labs.waterdata.usgs.gov/api/nldi/linked-data/comid/23762889/basin
+mapview(flowline, legend=FALSE, color='blue') + mapview(basin, color='black',alpha.regions=.05)
+```
+
+Same thing but truncate distance
+```{r}
+flowline <- navigate_nldi(list(featureSource = "comid", featureID = start_comid), mode = "upstreamTributaries", distance_km = 15)
+mapview(flowline, legend=FALSE, color='blue') + mapview(basin, color='black',alpha.regions=.05)
+```
+
+Or just upstream mainstem
+```{r}
+flowline <- navigate_nldi(list(featureSource = "comid", featureID = start_comid), mode = "upstreamMain", distance_km = 100)
+mapview(flowline, legend=FALSE, color='blue') + mapview(basin, color='black',alpha.regions=.05)
+```
+
+## Subset and download
+Notice that using NLDI web services results only return COMID for the flowlines and nothing for the basin.  Here we'll grab corresponding NHDPlusV2 data subset with other data and attributes, and show how we would grab NHDPlusHR for same area using `nhdplusTools`.
+```{r}
+## bring back full upstream w/ tribs
+library(dplyr)
+flowline <- navigate_nldi(list(featureSource = "comid", featureID = start_comid), mode = "upstreamTributaries", distance_km = 100)
+subset_file <- tempfile(fileext = ".gpkg")
+subset <- subset_nhdplus(comids = flowline$nhdplus_comid, output_file = subset_file, nhdplus_data = "download", flowline_only = FALSE, return_data = TRUE, overwrite = TRUE)
+```
+
+What is `subset`?
+```{r}
+typeof(subset)
+names(subset)
+```
+
+Read in waterbodies and flowlines with full NHDplus attributes for subset data
+```{r}
+waterbody <- read_sf(subset_file, "NHDWaterbody")
+mapview(flowline, color='blue',legend=FALSE) + waterbody
+```
+
+```{r}
+full_flowlines <- read_sf(subset_file, "NHDFlowline_Network")
+glimpse(full_flowlines)
+```
+Grab the corresponding NHDPlusHR data
+```{r}
+# NHDPlusHR downloads are by HUC4, so find HUC4 using first 4 digits of Reachcode
+hu04 <- unique(substr(full_flowlines$reachcode , 1, 4))
+
+# Download NHDPlusHR - takes too long so we won't run right now
+# hr_data_dir <- download_nhdplushr('E:/NHDPlusHR', hu04)
+hr <- get_nhdplushr('E:/NHDPlusHR/17', layers = "NHDFlowline")
+hr_MarysBasin_IDs <- get_UT(hr$NHDFlowline, 55000900247111)
+
+hr_Marys <- hr$NHDFlowline %>% 
+  dplyr::filter(COMID %in% hr_MarysBasin_IDs)
+mapview(flowline, color='blue',legend=FALSE) + mapview(hr_Marys, color='green',legend=FALSE)
+
+```
+

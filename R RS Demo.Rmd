@@ -1,0 +1,375 @@
+---
+title: "A Leisurely Tour of Remote Sensing R Libraries"
+author: "Marc Weber"
+date: "`r format(Sys.time(),  '%B %d, %Y')`"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+## Intro
+We'll run through a quick demo of several R libraries implementing methods of working with remotely sensed imagery.
+
+Some of the main R remote sensing libraries I know of include:
+
+- [stars](https://github.com/r-spatial/stars)
+- [terra](https://rspatial.org/terra/rs/index.html)
+- [RSToolbox](http://bleutner.github.io/RStoolbox/) 
+- [rsat](https://github.com/spatialstatisticsupna/rsat)
+- [satellite](https://github.com/environmentalinformatics-marburg/satellite)
+- [landsat](https://cran.r-project.org/web/packages/landsat/index.html)
+- [rLandsat](https://github.com/atlanhq/rLandsat)
+- [sent2r](https://sen2r.ranghetti.info/articles/installation.html)
+- [sits](https://github.com/e-sensing/sits)
+- [waterquality](https://rajohansen.github.io/waterquality/articles/waterquality_vignette.html)
+- [rgee](https://github.com/r-spatial/rgee)
+
+We'll glance at each and then run through more details with a couple.
+
+Some of these libraries are designed for accessing particular satellite data, some are focused on algorithms and methods for working with satellite data once you have it, and some do both.
+
+We'll walk through in this order:
+1) Use a couple libraries to download some sample satellite data from particular satellites or data repositories
+2) Demonstrate libraries to work with satellite imagery in a standardized way
+3) Review libraries to processes satellite imagery and apply algorithms to RS data
+
+## Let's get some data!
+### Using `rsat` package
+I'll use `rsat` for this since I'm most familiar with this library. First we'll download and preview some MODIS and Landsat imagery. Note that to use the package, you need to set up credentials in one of the three satellite data repositories that the package uses - read [here](https://github.com/spatialstatisticsupna/rsat)
+```{r}
+library(rsat)
+library(tigris) 
+library(dplyr)
+set_credentials("username", "password","earthdata")
+show_variables()
+
+counties <- counties("Oregon", cb = TRUE)
+benton <- counties %>% 
+  dplyr::filter(NAME=='Benton') %>% 
+  dplyr::select(STATEFP,COUNTYFP)
+
+# here we set a date span to search for imagery - we pass a start data and then say look 30 days after that start date
+toi <- as.Date("2021-08-01") + 0:30
+# here we pass our region of interest as an sf data frame, we use our dates of interest, and we specify a product for our search - the codes below specify Landsat-8 and the MODIS Terra satellites
+rslt <- sat_search(region = benton,
+                  product = c("myd09ga","LANDSAT_8_C1"),
+                  dates = toi)
+
+# take a look at what we get back
+class(rslt)
+unique(sat_name(rslt))
+names(rslt)[1]
+unique(dates(rslt))
+
+rslt@sat
+rslt@file_path
+
+# subsetting
+mod <- subset(rslt, "Modis", "sat")
+landsat <- subset(rslt, "Landsat-8", "sat")
+length(mod)
+length(landsat)
+
+# roll our results into a dataframe
+rslt.df <- as.data.frame(rslt)
+dim(rslt.df)
+names(rslt.df)
+```
+
+### Plotting imagery 
+```{r}
+prview <- plot(mod[1:4])
+prview
+```
+
+```{r}
+prview <- plot(landsat[1:6])
+prview
+```
+
+
+```{r}
+plot(landsat[c(1,4)],
+     region = benton,
+     tm.polygon.region.border.col = "red",
+     tm.polygon.region.alpha = 0,
+     compass.rm = T,
+     scale.bar.rm = T)
+```
+
+### Test a download
+Not actually run since this takes a while.
+```{r}
+# download(rslt, 'C:/users/mweber/temp')
+```
+
+### Get LANDSAT data using `luna`
+Steps follow material [here](https://rspatial.org/terra/modis/2-download.html)
+```{r}
+library(dplyr)
+library(terra)
+# install.packages('luna', repos='https://rspatial.r-universe.dev')
+library(luna)
+library(geodata)
+# lists all products that are currently searchable
+prod <- getProducts()
+head(prod)
+landsat <- getProducts("^Landsat")
+product <- "Landsat_8_OLI_TIRS_C1"
+productInfo(product)
+
+start <- "2020-10-20"
+end <- "2020-10-30"
+us <- geodata::gadm("US", level=2, path=".")
+benton <- us[us$NAME_1=='Oregon' & us$NAME_2=='Benton',]
+plot(benton)
+```
+
+```{r}
+area <- c(-124.0, -122.8, 44.3, 44.7)
+ls8 <- luna::getLandsat(product, start, end, aoi=area, download = FALSE, path=".",server="AWS")
+```
+
+## Processing imagery
+### Basics  with `terra` and `stars`
+Following examples [here](https://rspatial.org/terra/rs/1-introduction.html) using sample data
+```{r}
+dir.create("data", showWarnings = FALSE)
+if (!file.exists("data/rs/samples.rds")) {
+    download.file("https://biogeo.ucdavis.edu/data/rspatial/rs.zip", dest = "data/rs.zip")
+    unzip("data/rs.zip", exdir="data")
+}
+```
+
+Explore and plot band layers of Landsat8 and create a composite - with `terra`
+```{r}
+library(terra)
+# Blue
+b2 <- rast('data/rs/LC08_044034_20170614_B2.tif')
+# Green
+b3 <- rast('data/rs/LC08_044034_20170614_B3.tif')
+# Red
+b4 <- rast('data/rs/LC08_044034_20170614_B4.tif')
+# Near Infrared (NIR)
+b5 <- rast('data/rs/LC08_044034_20170614_B5.tif')
+#resolution
+res(b2)
+crs(b3)
+```
+
+Plot individual bands
+```{r}
+plot(b2, main = "Blue", col = gray(0:100 / 100))
+plot(b3, main = "Green", col = gray(0:100 / 100))
+plot(b4, main = "Red", col = gray(0:100 / 100))
+plot(b5, main = "NIR", col = gray(0:100 / 100))
+```
+
+Plot RGB
+```{r}
+landsatRGB <- c(b4, b3, b2)
+plotRGB(landsatRGB, stretch = "lin")
+```
+
+Gather full Landsat bands from downloaded example data
+```{r}
+filenames <- paste0('data/rs/LC08_044034_20170614_B', 1:11, ".tif")
+landsat <- rast(filenames)
+landsat
+```
+
+Similar with `stars`
+```{r}
+library(stars)
+landsat <- st_as_stars(landsat)
+plot(landsat)
+```
+
+`stars` object details
+```{r}
+landsat
+```
+`stars` methods
+```{r}
+methods(class = "stars")
+```
+
+We can do cool things with tidyverse methods in `stars` such as slicing: 
+```{r}
+library(tidyverse)
+dim(landsat)
+landsat %>% slice(band, 4) -> b4
+b4
+```
+
+..and filtering:
+```{r}
+landsat %>% filter(x > 600000, x < 620000, band > 5) -> smarea_bgt5
+smarea_bgt5
+```
+
+### plotting `stars` objects with `tmap`
+```{r}
+library(tmap)
+tm_shape(landsat) +
+  tm_raster(style = "kmeans", midpoint=NA)
+```
+
+An example grabbing large demo Sentinel data that comes with the `starsdata` package and plotting with `tmap`
+```{r}
+# install.packages("starsdata", repos = "http://pebesma.staff.ifgi.de", type = "source") 
+library(starsdata)
+sentdata = system.file("sentinel/S2A_MSIL1C_20180220T105051_N0206_R051_T32ULE_20180221T134037.zip", 
+  package = "starsdata")
+s2 = paste0("SENTINEL2_L1C:/vsizip/", sentdata, 
+  "/S2A_MSIL1C_20180220T105051_N0206_R051_T32ULE_20180221T134037.SAFE/MTD_MSIL1C.xml:10m:EPSG_32632")
+(p = read_stars(s2))
+```
+
+This just created a 'stars proxy' object for us - stars proxy objects allow for dealing with really big data - they are just pointers to where the data can be read - and then data is just read as needed, when needed, and only as much as needed for a task.
+
+```{r}
+tm_shape(p) +
+  tm_rgb(4,3,2, max.value = 14000)
+```
+
+### Using `rsat` to mosaic and calculate NDVI
+```{r}
+toi <- as.Date("2021-08-01") + 0:05
+benton2 <- new_rtoi(name = "benton2",
+                     region = benton,
+                    db_path = 'C:/users/mweber/temp',
+                     rtoi_path = 'C:/users/mweber/temp')
+benton_modis <- sat_search(region = benton2, product = c("mod09ga"), dates = toi, rtio.path='C:/users/mweber/temp')
+download(benton_modis,'C:/users/mweber/temp')
+mosaic(benton_modis, overwrite = T, out_path='C:/users/mweber/temp', db_path='C:/users/mweber/temp')
+list.files(file.path('C:/users/mweber/temp', "Modis", "Modis/mod09ga/mosaic"), full.name = TRUE)
+derive(benton, product = "mod09ga", variable = "NDVI",)
+```
+
+### `waterquality` package
+`waterquality` uses `raster` package `rasterstack` objects
+```{r}
+library(waterquality)
+library(raster)
+filenames <- paste0('data/rs/LC08_044034_20170614_B', 1:11, ".tif")
+landsat <- rast(filenames)
+landsat <- raster::stack(landsat)
+l8_wq = wq_calc(landsat, alg = "all", sat = "landsat8")
+```
+
+```{r}
+plot(l8_wq)
+```
+
+### `rgee`
+Full access to Earth Engine through R - how cool is that?
+```{r}
+library(reticulate)
+library(rgee)
+ee_Initialize()
+```
+```{r}
+dataset <- ee$ImageCollection('LANDSAT/LC08/C01/T1_8DAY_EVI')$filterDate('2021-10-01', '2021-10-31')
+ee_print(dataset)
+```
+
+```{r}
+landsat <- dataset$select('EVI')
+class(landsat)
+```
+
+```{r}
+evi <- landsat$select('EVI')$toBands()
+class(evi)
+ee_print(evi)
+```
+
+Select out a region
+```{r}
+region <- ee$Geometry$BBox(-124.07, 44.3, -122.8, 44.7)
+Map$centerObject(region, 11)
+```
+
+```{r}
+colorizedVis <- list(
+  min=0.0,
+  max=1.0,
+  palette=c(
+    'FFFFFF', 'CE7E45', 'DF923D', 'F1B555', 'FCD163', '99B718', '74A901',
+    '66A000', '529400', '3E8601', '207401', '056201', '004C00', '023B01',
+    '012E01', '011D01', '011301'
+  )
+)
+```
+
+```{r}
+evi08oct <- evi$select("20211008_EVI")
+Map$addLayer(evi08oct, colorizedVis, 'Landsat 8 EVI 08-October-2021')
+```
+### Climate Analysis
+```{r}
+terraclimate <- ee$ImageCollection("IDAHO_EPSCOR/TERRACLIMATE")
+print(terraclimate)
+```
+
+```{r}
+terraclimate <- ee$ImageCollection("IDAHO_EPSCOR/TERRACLIMATE") %>% # dataset
+  ee$ImageCollection$filterDate("2020-01-01", "2021-01-01") %>%   # data range
+  ee$ImageCollection$map(function(x) x$select("pr")) %>% # Select only precipitation bands
+  ee$ImageCollection$toBands() %>% # from ImageCollection to Image
+  ee$Image$rename(sprintf("%02d",1:12)) # rename the bands of an image
+print(terraclimate)
+```
+
+```{r}
+function(x) x$select("pr")
+```
+
+```{r}
+bandNames <- terraclimate$bandNames()
+cat("Band names: ",paste(bandNames$getInfo(),collapse=",")) 
+```
+```{r}
+b0proj <- terraclimate$select('01')$projection()
+cat("Band 01 projection: ", paste(b0proj$getInfo(),"\n", collapse = " "))
+```
+
+```{r}
+library(tigris)
+counties <- counties("Oregon", cb = TRUE)
+benton <- counties %>% 
+  dplyr::filter(NAME=='Benton')
+```
+
+```{r}
+ee_or_rain <- ee_extract(x = terraclimate, y = counties["NAME"], sf = FALSE)
+str(ee_or_rain)
+```
+```{r}
+library(tidyverse)
+ee_or_rain_long <- ee_or_rain %>%
+  pivot_longer(-NAME, names_to = "month", values_to = "pr") %>%
+  mutate(month, month=gsub("X", "", month)) # reformat the month name
+str(ee_or_rain_long)
+```
+
+And the results!
+```{r}
+library(ggplot2)  
+ee_or_rain_long %>%
+  filter(NAME=="Benton") %>%
+  ggplot() +
+    geom_col(aes(x=month, y=pr)) +
+    xlab("Month") + ylab("Precipitation (mm)")
+```
+
+```{r}
+ee_or_rain_long %>%
+  ggplot(aes(x = month, y = pr, group = NAME, color = pr)) +
+   geom_line(alpha = 0.4) +
+   xlab("Month") +
+   ylab("Precipitation (mm)") +
+   theme_minimal()
+```
+
