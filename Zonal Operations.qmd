@@ -1,0 +1,73 @@
+---
+title: "Zonal Operations"
+author: "Marc Weber"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+format: 
+  html:
+    toc: true
+    toc-depth: 4
+    toc-location: left
+    self-contained: true
+    code-link: true
+    code-fold: true
+editor: visual
+---
+
+## Setup
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(dplyr)
+library(sf)
+library(tidyverse)
+library(readr)
+library(terra)
+library(parallel)
+# remotes::install_github("mikejohnson51/zonal", force = TRUE)
+# remotes::install_github("mikejohnson51/aoi", force = TRUE)
+library(zonal)
+library(AOI)
+library(mapview)
+mapviewOptions(fgb=FALSE, basemaps="OpenStreetMap")
+```
+
+## Zonal with zonal package
+
+```{r}
+AOI <- AOI::aoi_get(state = "oregon", county = "all")
+mapview(AOI)
+```
+
+```{r}
+nlcd <- terra::rast('L:/Priv/CORFiles/Geospatial_Library_Resource/PHYSICAL/LAND_USE_LAND_COVER/NLCD/nlcd2016/NLCD_2001_Land_Cover_L48_20190424.img')
+AOI <- st_transform(AOI,crs(nlcd))
+nlcd_OR <- terra::crop(nlcd, vect(AOI))
+
+system.time({
+  lc = zonal::execute_zonal(nlcd_OR, AOI, ID = "fip_code", 
+                      fun = "frac")
+})
+```
+
+## Set up reticulate to find my conda environments
+
+```{r}
+library(reticulate)
+
+use_condaenv("geo", conda="C:/Users/mweber/AppData/Local/miniforge3/envs/geo", required = TRUE)
+```
+
+## And more
+
+```{python}
+import matplotlib.pyplot as plt
+import numpy as np
+r = np.arange(0, 2, 0.01)
+theta = 2 * np.pi * r
+fig, ax = plt.subplots(
+  subplot_kw = {'projection': 'polar'} 
+)
+ax.plot(theta, r)
+ax.set_rticks([0.5, 1, 1.5, 2])
+ax.grid(True)
+plt.show()
+```
