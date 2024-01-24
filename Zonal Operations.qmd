@@ -30,13 +30,59 @@ library(mapview)
 mapviewOptions(fgb=FALSE, basemaps="OpenStreetMap")
 ```
 
-## Zonal with zonal package
+## What are zonal operations?
+
+Zonal statistics have been around for a while - a zonal statistics operation is one that calculates statistics on cell values of a raster (a value raster) within the zones defined by another dataset.
+
+![zonal](zonal.png) The [How zonal statistics tools work](https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/how-zonal-statistics-works.htm#:~:text=A%20zonal%20statistics%20operation%20is,and%20Zonal%20Statistics%20as%20Table.) ArcPro documentation pages gives a great explanation.
+
+*Categorical Raster summaries* are just a variety of zonal operations where we calculate cross-tabulated areas two datasets and ouput that as a table - in ArcPro this is called *Tabulate Area*
+
+![tabulate](tabulate.png)
+
+## Zonal statistics 'gotchas'
+
+- Overlapping zones
+- zonal operations using vector features as zones are running rasterizing vector features under the hood - need to be aware of the cell prioritization method:
+  - cell center method used by default in zonal tools in ArcPro
+  - Python [rasterstats](https://pythonhosted.org/rasterstats/manual.html ) includes a nice discussion of rasterization strategy and parameterizes as `all_touched=False` (the cell center method) or `all-touched=True` (include all value grid cells that touch a polygon boundary)
+  
+![Rasterization](Rasterization.png)
+
+## Basic zonal stats with terra::zonal
+More details in [EPA R spatial workshop from this past fall](https://usepa.github.io/spatialdata.epaR2023/geoprocessing.html#zonal-operations)
 
 ```{r}
 AOI <- AOI::aoi_get(state = "oregon", county = "all")
 mapview(AOI)
 ```
 
+```{r}
+clay <- terra::rast('O:/PRIV/CPHEA/PESD/COR/CORFILES/Geospatial_Library_Projects/StreamCat/LandscapeRasters/QAComplete/clay.tif')
+AOI <- st_transform(AOI,crs(clay))
+clay_OR <- terra::crop(clay, vect(AOI))
+system.time({
+clay_zonal = terra::zonal(clay_OR, terra::vect(AOI), na.rm = TRUE, fun = "mean")
+})
+```
+
+```{r}
+head(clay_zonal)
+```
+
+## Basic zonal stats with `zonal::execute_zonal`
+Same as above but using the `zonal` package
+```{r}
+system.time({
+  clay_zonal = zonal::execute_zonal(data=clay_OR, geom=AOI, ID='fip_code',fun = "mean")
+})
+```
+
+```{r}
+head(clay_zonal[,c('fip_code','name','mean.clay')])
+```
+
+## Categorical summary with `zonal::execute_zonal`
 ```{r}
 nlcd <- terra::rast('L:/Priv/CORFiles/Geospatial_Library_Resource/PHYSICAL/LAND_USE_LAND_COVER/NLCD/nlcd2016/NLCD_2001_Land_Cover_L48_20190424.img')
 AOI <- st_transform(AOI,crs(nlcd))
