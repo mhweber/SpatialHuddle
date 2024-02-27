@@ -1,0 +1,35 @@
+---
+title: "STAC and COG"
+author: "Marc Weber"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+format: 
+  html:
+    toc: true
+    toc-depth: 4
+    toc-location: left
+    self-contained: true
+    code-link: true
+    code-fold: true
+editor: visual
+---
+
+## Setup
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(dplyr)
+library(sf)
+library(tidyverse)
+library(readr)
+library(terra)
+library(parallel)
+# remotes::install_github("mikejohnson51/zonal", force = TRUE)
+# remotes::install_github("mikejohnson51/aoi", force = TRUE)
+library(zonal)
+library(AOI)
+library(mapview)
+mapviewOptions(fgb=FALSE, basemaps="OpenStreetMap")
+```
+
+## Resources
+
+[Sentinel in Python via STAC](https://medium.com/rotten-grapes/download-sentinel-data-within-seconds-in-python-8cc9a8c3e23c)
