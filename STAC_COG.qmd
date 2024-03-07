@@ -33,3 +33,7 @@ mapviewOptions(fgb=FALSE, basemaps="OpenStreetMap")
 ## Resources
 
 [Sentinel in Python via STAC](https://medium.com/rotten-grapes/download-sentinel-data-within-seconds-in-python-8cc9a8c3e23c)
+
+[COG](https://www.cogeo.org/)
+
+[STAC](https://stacspec.org/en/)
