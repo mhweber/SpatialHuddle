@@ -1,0 +1,74 @@
+---
+title: "DMAP Resources and Examples"
+author: "Marc Weber"
+format: revealjs
+editor: visual
+---
+
+## Data Commons and DMAP Portal
+
+- The best place to start exploring DMAP resources is [the Data Commons home page](https://work.epa.gov/data-science/data-commons) and [the DMAP Portal page](https://work.epa.gov/data-science/dmap-portal) with links to:
+    
+  - current services
+  - tutorials
+  - showcases of current
+  - uses in the agency
+  - example code snippets
+
+## Data Training Resources
+
+Also look at the [training resources](https://work.epa.gov/data-science/dmap-training-resources) page where you can:
+
+  - sign up for the DMAP newsletter
+  - read FAQs
+  - see a calendar of all upcoming data science related meetings in the agency
+
+## Using the CLI for managing data transfers
+
+  - You can use the Analytics Platform interface, but it will be slow for big data transfers and it's best to use the command line interface (CLI)
+  
+## Using Sagemaker
+
+  - Sagemaker is an AWS machine learning service that provides infrastructure, tools, workflows for machine learning
+  - Sagemaker is set to replace the current Analytics platform in DMAP sometime this year
+  
+## Accessing Data Commons data in RStudio on the desktop
+This is following example code [here](https://work.epa.gov/data-science/data-commons)
+
+### OMS data bucket
+```{r}
+library(aws.s3)
+bucket_contents <-
+  data.table::rbindlist(get_bucket(bucket = "edap-oms-data-commons"),
+  fill = TRUE)
+head(bucket_contents$Key)
+```
+
+### ORD data bucket
+```{r}
+bucket_contents <-
+  data.table::rbindlist(get_bucket(bucket = "dmap-data-commons-ord"),
+  fill = TRUE)
+head(bucket_contents$Key)
+```
+
+### My public content in ORD data bucket
+Read in some of sample geoparquet file I have stored in DMAP ORD public bucket
+```{r}
+library(arrow)
+library(data.table)
+library(readr)
+'NARS_Sample_Frames/CT_points.parquet' %in% bucket_contents$Key
+
+test_data <- s3read_using(
+  FUN = read_parquet,
+  bucket = "dmap-data-commons-ord",
+  object = "NARS_Sample_Frames/CT_points.parquet",
+  show_col_types = TRUE,
+  col_names=TRUE,
+  guess_max = 10000
+)
+
+head(test_data)
+```
+
