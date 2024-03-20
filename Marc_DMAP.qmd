@@ -2,6 +2,7 @@
 title: "DMAP Resources and Examples"
 author: "Marc Weber"
 format: revealjs
+embed-resources: true
 editor: visual
 ---
 
