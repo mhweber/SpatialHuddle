@@ -33,6 +33,7 @@ Also look at the [training resources](https://work.epa.gov/data-science/dmap-tra
 ## Using the CLI for managing data transfers
 
 -   You can use the Analytics Platform interface, but it will be slow for big data transfers and it's best to use the command line interface (CLI)
+-   You'll need to install AWS CLI
 
 ## Using Sagemaker
 
