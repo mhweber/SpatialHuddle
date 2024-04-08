@@ -1,63 +1,76 @@
 ---
-title: "Web Services in R"
+title: "Accessing spatial data in R using web services, STAC resources and packages built around web services"
 author: "Marc Weber"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-format: 
-  html:
-    toc: true
-    toc-depth: 4
-    toc-location: left
-    self-contained: true
-    code-link: true
-    code-fold: true
+format: revealjs
+embed-resources: true
 editor: visual
+execute: 
+  eval: true
+  error: false
+  echo: true
+  warning: false
+  include: true
+  progress: true
 ---
-
-## Setup
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
-library(dplyr)
-library(sf)
-library(tidyverse)
-library(readr)
-remotes::install_github("r-arcgis/arcgis", dependencies = TRUE)
-library(mapview)
-mapviewOptions(fgb=FALSE, basemaps="OpenStreetMap")
-library(AOI)
-```
 
 ## Arcgislayers package
 
-```{r}
-library(arcgis)
-```
+-   Example from [GitHub repo for arcgislayers](https://github.com/R-ArcGIS/arcgislayers)
+-   This example reads ESRI Rest service for USA Counties in R
 
-### Examples from [GitHub repo for package](https://github.com/R-ArcGIS/arcgislayers)
 ```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| output-location: slide
+library(arcgis, quietly = TRUE)
 furl <- "https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/USA_Counties_Generalized_Boundaries/FeatureServer/0"
-
 county_fl <- arc_open(furl)
-
 county_fl
 ```
 
-```{r}
-arc_select(county_fl)
-```
+## View the content with `glimpse`
 
 ```{r}
+#| warning: false
+#| message: false
+#| error: false
+library(dplyr)
+glimpse(arc_select(county_fl))
+```
+
+## Read in `sf` feature for spatial filter
+
+-   Here we'll read in an `sf` feature to use as a spatial query template for pulling in ESRI REST service layers
+-   We pass a similar `arc_select` query as last time for USA Counties but apply a spatial filter of North Carolina
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| slide: true
 nc <- sf::st_read(system.file("shape/nc.shp", package="sf"))
 test <- arc_select(
   county_fl,
   filter_geom = sf::st_bbox(nc[1,])
 )
 ```
-
+## List Fields 
+- By using `list_fields` we can find out more about the service and what attributes we can query (rather than reading in the whole layer)
 ```{r}
+#| warning: false
+#| message: false
+#| error: false
 list_fields(county_fl)
 ```
 
+## Use an attriburte query in `arc_select`
 ```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| output-location: slide
 arc_select(
   county_fl, 
   fields = c("state_abbr", "population"), 
@@ -65,56 +78,95 @@ arc_select(
 )
 ```
 
+## Query EPA ECHO REST Service
 
-### Test with a few layers Mark mentioned
-Try [ECHO](https://echogeo.epa.gov/arcgis/rest/services/ECHO/Facilities/MapServer) - note that we need to drill down to a particular numberred layer as listed on this link to grab features - examples below
+- Try [ECHO](https://echogeo.epa.gov/arcgis/rest/services/ECHO/Facilities/MapServer) 
+- Note that we need to drill down to a particular numbered layer as listed on this link to grab features - examples below
+
 ```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| output-location: slide
 furl <- "https://echogeo.epa.gov/arcgis/rest/services/ECHO/Facilities/MapServer/3"
 
 rcra <- arc_open(furl)
 rcra
 ```
 
-#### Look at table to figure out field query options
+## Again use `list_fields` to figure out field query options
+
 ```{r}
+#| warning: false
+#| message: false
+#| error: false
 list_fields(rcra)
 ```
 
-#### Try a fields based query
-```{r}
-rcra_pdx <- arc_select(
-  rcra, 
-  fields = c("GLOBALID", "RCR_NAME", "RCR_CITY","RCR_STATE","RCR_ZIP"), 
-  where = "RCR_ZIP = '97209'"
-)
-```
+## Try a fields based query
+- This time we'll use `mapview` to display the result of our query
 
 ```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| output-location: slide
+library(mapview)
+mapviewOptions(fgb=FALSE)
+rcra_pdx <- arc_select(
+  rcra, 
+  fields = c("GLOBALID", "RCR_NAME", "RCR_CITY","RCR_STATE","RCR_ZIP","RCRA_CURR_COMPL_STATUS","DFR_URL"), 
+  where = "RCR_ZIP = '97209'"
+)
 mapview(rcra_pdx)
 ```
 
-#### Try a spatial query
+## Try a spatial query
+- Here we demonstrate using the `AOI` package for convenience georeferencing to get spatial boundary of Benton County in Oregon to use as a spatial filter
 ```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| output-location: slide
+library(AOI)
 Benton <- aoi_get(state = "OR", county= "Benton")
 rcra_benton <- arc_select(
   rcra,
+  fields = c("GLOBALID", "RCR_NAME", "RCR_CITY","RCR_STATE","RCR_ZIP","RCRA_CURR_COMPL_STATUS","DFR_URL"),
   filter_geom = sf::st_bbox(Benton))
 mapview(rcra_benton)
 ```
 
-### EJ Screen layer - food access
+## EJ Screen layer - food access
+- Use `arc_open` to read in one of the many layers available as EJSCREEN REST layers
 ```{r}
-furl <- "https://raisz.epa.gov/arcgis/rest/services/ejscreen/ejscreen_v2023_with_as_cnmi_gu_vi/MapServer/10"
+#| warning: false
+#| message: false
+#| error: false
+#| output-location: slide
+furl <- "https://ejscreen.epa.gov/ArcGIS/rest/services/ejscreen/ejscreen_v2023_with_as_cnmi_gu_vi/MapServer/10"
 
 food_access <- arc_open(furl)
 food_access
 ```
-#### Look at table to figure out field query options
+
+## Look at table to figure out field query options
+
 ```{r}
+#| warning: false
+#| message: false
+#| error: false
 list_fields(food_access)
 ```
 
+## Apply a spatial filter to EJSCREEN layer
+- Use `AOI` to get a county spatial boundary for a filter 
+- Pass that spatial filter to `arc_select` for EJSCREEN food access service layer
 ```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| output-location: slide
 Multnomah <- aoi_get(state = "OR", county= "Multnomah")
 food_access_multnomah <- arc_select(
   food_access,
