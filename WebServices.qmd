@@ -1,5 +1,5 @@
 ---
-title: "Accessing spatial data in R using web services, STAC resources and packages built around web services"
+title: "Web services, STAC, and COG for accessing spatial data in R"
 author: "Marc Weber"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 format: revealjs
@@ -14,6 +14,32 @@ execute:
   progress: true
 ---
 
+## The Problem
+
+- Working with spatial in R has typically involved importing data locally into R from a variety of sources
+  - This is a manual process
+  - It's not very reproducible
+  - It requires storing local data and passing data files for code to work
+  
+## Outline
+
+- Accessing data with RESTful APIs in R
+- Accessing ESRI REST services in R
+- Accessing STAC data in R
+- Accessing COGs in R
+
+## REST Services
+tidycensus - https://crd230.github.io/lab3.html
+
+tigris
+
+https://wiki.openstreetmap.org/wiki/Overpass_API
+
+https://kdvdecisions-blog.netlify.app/2020/04/18/obtaining-spatial-data-from-esri-rest-apis-in-r/
+
+https://www.reddit.com/r/gis/comments/tb5rcq/what_are_some_of_your_favorite_apis_that_expose/
+
+https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php
 ## Arcgislayers package
 
 -   Example from [GitHub repo for arcgislayers](https://github.com/R-ArcGIS/arcgislayers)
@@ -173,3 +199,23 @@ food_access_multnomah <- arc_select(
   filter_geom = sf::st_bbox(Multnomah))
 mapview(food_access_multnomah)
 ```
+
+## STAC and COG
+[Spatio-Temporal Asset Catalogs (STAC)](https://stacspec.org/en) and [Cloud-Optimized Geotiffs (COG)](https://www.cogeo.org/)
+
+- STAC and COG are specifications we can use to extract data from large typically raster datasets 
+- Rather than dowloading GB worth of data locally we can collect data from large rasters via spatial, temporal and attribute queries
+
+STAC
+https://stacspec.org/en/tutorials/1-download-data-using-r/
+
+https://r-spatial.org/r/2021/04/23/cloud-based-cubes.html
+
+
+## COGs
+
+- Uses 2 key technologies:
+  - storing and organizing pixels in optimzed way
+  - using HTTP GET range requests to access just portions of a file needed
+  
+https://frodriguezsanchez.net/post/accessing-data-from-large-online-rasters-with-cloud-optimized-geotiff-gdal-and-terra-r-package/
