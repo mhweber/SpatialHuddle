@@ -204,7 +204,7 @@ mapview(food_access_multnomah)
 [Spatio-Temporal Asset Catalogs (STAC)](https://stacspec.org/en) and [Cloud-Optimized Geotiffs (COG)](https://www.cogeo.org/)
 
 - STAC and COG are specifications we can use to extract data from large typically raster datasets 
-- Rather than dowloading GB worth of data locally we can collect data from large rasters via spatial, temporal and attribute queries
+- Rather than downloading GB worth of data locally we can collect data from large rasters via spatial, temporal and attribute queries
 
 STAC
 https://stacspec.org/en/tutorials/1-download-data-using-r/
