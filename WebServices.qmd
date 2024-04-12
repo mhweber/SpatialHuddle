@@ -16,19 +16,57 @@ execute:
 
 ## The Problem
 
-- Working with spatial in R has typically involved importing data locally into R from a variety of sources
-  - This is a manual process
-  - It's not very reproducible
-  - It requires storing local data and passing data files for code to work
-  
+-   Working with spatial in R has typically involved importing data locally into R from a variety of sources
+    -   This is a manual process
+    -   It's not very reproducible
+    -   It requires storing local data and passing data files for code to work
+
 ## Outline
 
-- Accessing data with RESTful APIs in R
-- Accessing ESRI REST services in R
-- Accessing STAC data in R
-- Accessing COGs in R
+-   Accessing data with RESTful APIs in R
+-   Accessing ESRI REST services in R
+-   Accessing STAC data in R
+-   Accessing COGs in R
 
-## REST Services
+## APIs, Web Services, REST, HTTP? 
+
+-   What does this all mean?
+-   **API**: Application Programming Interface - a set of definitions and protocols for building and integrating application software - *does not have to be online*!
+-   **Web Services**: API with web service - a network is required to transfer information
+- **HTTP**: Hypertext Transfer Protocol  - the protocol for transmitting data between client and server (GET, POST, PATCH)
+
+## APIs, Web Services, REST, HTTP? 
+
+- **REST**: a set of architectural constraints, not a protocol or a standard     - When a client request is made via a RESTful API, it transfers a representation of the state of the resource to the requesting client
+    - This information, or *representation*, is delivered in one of several formats via **HTTP** such as **JSON** (Javascript Object Notation),**XML**, **YAML**, **HTML** or plain text. 
+
+## Web Services in R
+
+-   `httr2` is arguably the go-to library currently for accessing APIs in R
+-   `httr2` replaces the `httr` package, providing a wrapper for the `curl` package
+-   built for working with most modern web APIs.
+-   `jsonlite` also used as a JSON parser and generator
+
+## FRS data Web Service
+- Here we show a basic example of a `GET` request using `httr2` package
+```{r}
+req <- httr2::request("https://echodata.epa.gov/echo/dfr_rest_services.get_dfr?output=JSON")
+req
+```
+
+## FRS data Web Service 
+We structure a request following parameters in [FRS API documentation](https://echo.epa.gov/tools/web-services/detailed-facility-report#/Detailed%20Facility%20Report/get_dfr_rest_services_get_dfr)
+```{r}
+query <-  httr2::req_url_query(
+    .req = req,
+    p_id=110042133367,
+    p_gt5yr='N') 
+resp <- httr2::req_perform(req = query)
+```
+
+
+
+## Census data Web Service
 tidycensus - https://crd230.github.io/lab3.html
 
 tigris
@@ -40,6 +78,32 @@ https://kdvdecisions-blog.netlify.app/2020/04/18/obtaining-spatial-data-from-esr
 https://www.reddit.com/r/gis/comments/tb5rcq/what_are_some_of_your_favorite_apis_that_expose/
 
 https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php
+
+## OGC API Services
+
+## Example: geoconnex
+
+## Example: geoconnex
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+collection_url <- "https://reference.geoconnex.us/collections"
+collections <- jsonlite::fromJSON(collection_url)
+
+collections$collections |> dplyr::select(title, description) |> 
+  dplyr::slice(1:2,8:10) 
+```
+
+## Example: geoconnex
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+```
+
 ## Arcgislayers package
 
 -   Example from [GitHub repo for arcgislayers](https://github.com/R-ArcGIS/arcgislayers)
@@ -82,8 +146,11 @@ test <- arc_select(
   filter_geom = sf::st_bbox(nc[1,])
 )
 ```
-## List Fields 
-- By using `list_fields` we can find out more about the service and what attributes we can query (rather than reading in the whole layer)
+
+## List Fields
+
+-   By using `list_fields` we can find out more about the service and what attributes we can query (rather than reading in the whole layer)
+
 ```{r}
 #| warning: false
 #| message: false
@@ -92,6 +159,7 @@ list_fields(county_fl)
 ```
 
 ## Use an attriburte query in `arc_select`
+
 ```{r}
 #| warning: false
 #| message: false
@@ -106,8 +174,8 @@ arc_select(
 
 ## Query EPA ECHO REST Service
 
-- Try [ECHO](https://echogeo.epa.gov/arcgis/rest/services/ECHO/Facilities/MapServer) 
-- Note that we need to drill down to a particular numbered layer as listed on this link to grab features - examples below
+-   Try [ECHO](https://echogeo.epa.gov/arcgis/rest/services/ECHO/Facilities/MapServer)
+-   Note that we need to drill down to a particular numbered layer as listed on this link to grab features - examples below
 
 ```{r}
 #| warning: false
@@ -130,7 +198,8 @@ list_fields(rcra)
 ```
 
 ## Try a fields based query
-- This time we'll use `mapview` to display the result of our query
+
+-   This time we'll use `mapview` to display the result of our query
 
 ```{r}
 #| warning: false
@@ -148,7 +217,9 @@ mapview(rcra_pdx)
 ```
 
 ## Try a spatial query
-- Here we demonstrate using the `AOI` package for convenience georeferencing to get spatial boundary of Benton County in Oregon to use as a spatial filter
+
+-   Here we demonstrate using the `AOI` package for convenience georeferencing to get spatial boundary of Benton County in Oregon to use as a spatial filter
+
 ```{r}
 #| warning: false
 #| message: false
@@ -164,7 +235,9 @@ mapview(rcra_benton)
 ```
 
 ## EJ Screen layer - food access
-- Use `arc_open` to read in one of the many layers available as EJSCREEN REST layers
+
+-   Use `arc_open` to read in one of the many layers available as EJSCREEN REST layers
+
 ```{r}
 #| warning: false
 #| message: false
@@ -186,8 +259,10 @@ list_fields(food_access)
 ```
 
 ## Apply a spatial filter to EJSCREEN layer
-- Use `AOI` to get a county spatial boundary for a filter 
-- Pass that spatial filter to `arc_select` for EJSCREEN food access service layer
+
+-   Use `AOI` to get a county spatial boundary for a filter
+-   Pass that spatial filter to `arc_select` for EJSCREEN food access service layer
+
 ```{r}
 #| warning: false
 #| message: false
@@ -201,21 +276,20 @@ mapview(food_access_multnomah)
 ```
 
 ## STAC and COG
+
 [Spatio-Temporal Asset Catalogs (STAC)](https://stacspec.org/en) and [Cloud-Optimized Geotiffs (COG)](https://www.cogeo.org/)
 
-- STAC and COG are specifications we can use to extract data from large typically raster datasets 
-- Rather than dowloading GB worth of data locally we can collect data from large rasters via spatial, temporal and attribute queries
+-   STAC and COG are specifications we can use to extract data from large typically raster datasets
+-   Rather than dowloading GB worth of data locally we can collect data from large rasters via spatial, temporal and attribute queries
 
-STAC
-https://stacspec.org/en/tutorials/1-download-data-using-r/
+STAC https://stacspec.org/en/tutorials/1-download-data-using-r/
 
 https://r-spatial.org/r/2021/04/23/cloud-based-cubes.html
 
-
 ## COGs
 
-- Uses 2 key technologies:
-  - storing and organizing pixels in optimzed way
-  - using HTTP GET range requests to access just portions of a file needed
-  
+-   Uses 2 key technologies:
+    -   storing and organizing pixels in optimzed way
+    -   using HTTP GET range requests to access just portions of a file needed
+
 https://frodriguezsanchez.net/post/accessing-data-from-large-online-rasters-with-cloud-optimized-geotiff-gdal-and-terra-r-package/
