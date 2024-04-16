@@ -1,7 +1,7 @@
 ---
 title: "Web services, STAC, and COG for accessing spatial data in R"
 author: "Marc Weber"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+date: "April 17, 2024"
 format: revealjs
 embed-resources: true
 editor: visual
@@ -25,8 +25,7 @@ execute:
 
 -   Accessing data with RESTful APIs in R
 -   Accessing ESRI REST services in R
--   Accessing STAC data in R
--   Accessing COGs in R
+-   Accessing cloud-optimized geospatial data (COGS) via STAC (Spatial-Temporal Asset Catalogs) R
 
 ## APIs, Web Services, REST, HTTP? 
 
@@ -53,10 +52,10 @@ execute:
 req <- httr2::request("https://echodata.epa.gov/echo/dfr_rest_services.get_dfr?output=JSON")
 ```
 
-## ECHO data using Web Service
+## ECHO  data using Web Service
 
-- We structure a request following parameters in [FRS API documentation](https://echo.epa.gov/tools/web-services/detailed-facility-report#/Detailed%20Facility%20Report/get_dfr_rest_services_get_dfr)
-- First off, we can use `curl_translate` to get example query for `httr` from ECHO API documentation
+- We structure a request following parameters in the [ECHO detailed facility report API documentation](https://echo.epa.gov/tools/web-services/detailed-facility-report#/Detailed%20Facility%20Report/get_dfr_rest_services_get_dfr)
+- First off, we can use `curl_translate` to generate an example query for `httr` from ECHO API documentation
 
 ```{r}
 #| warning: false
@@ -69,8 +68,8 @@ httr2::curl_translate("curl -X 'GET' \
 ```
 ## ECHO data using Web Service
 
-- Then we take result from `curl_translate` to generate a simple non-spatial request 
-- We'll come back to this in following slides and see pulling in ESRI REST service for FRS data
+- Then we take the result from `curl_translate` to generate a simple non-spatial request 
+- We'll come back to this in following slides and walk through pulling in an ESRI REST service for spatial FRS data
 
 ```{r}
 resp <- httr2::request("https://echodata.epa.gov/echo/dfr_rest_services.get_dfr") |> 
@@ -96,27 +95,37 @@ result <- resp |>
 result$Results$Permits[[1]]$FacilityName
 ```
 
-## Census data Web Service
+## Spatial data via web services in a package
 
-- The `tidycensus` and `tigris` packages are excellent R packages that wrap the US Census API
-- Just a few examples of their use here
-tidycensus - https://crd230.github.io/lab3.html
+- With the [tigris](https://github.com/walkerke/tigris) package we can easily retrieve and load census geographies  and Census Tiger line files for anywhere we like
 
-tigris
+```{r}
+#| output-location: slide
+Corvallis_roads <- tigris::roads("OR", "Benton", progress_bar = FALSE)
 
-https://wiki.openstreetmap.org/wiki/Overpass_API
+ggplot2::ggplot(Corvallis_roads) + 
+  ggplot2::geom_sf() + 
+  ggplot2::theme_void()
+```
 
-https://kdvdecisions-blog.netlify.app/2020/04/18/obtaining-spatial-data-from-esri-rest-apis-in-r/
+## Spatial data via web services in a package
 
-https://www.reddit.com/r/gis/comments/tb5rcq/what_are_some_of_your_favorite_apis_that_expose/
+- Access hydrology data using the [Network-Linked Data Index (NLDI) Service](https://waterdata.usgs.gov/blog/nldi-intro/) 
+- Here we demonstrate using the service with the `nhdplusTools` package as well as pulling in an area of interest with the `AOI` package
 
-https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php
+```{r}
+#| output-location: slide
+corvallis <- AOI::aoi_ext(geo = "Corvallis, OR", wh = 10000, bbox = TRUE) |> 
+  sf::st_as_sf()
+corvallis_hydro <- nhdplusTools::get_nhdplus(corvallis, realization = "all")
+# get stream gages too
+corvallis_hydro$gages <- nhdplusTools::get_nwis(AOI::aoi_get(state="OR",county="Benton"))
+mapview::mapview(corvallis_hydro)
+```
 
-## OGC API Services
 
 ## geoconnex
 
-## geoconnex
 
 ```{r}
 #| warning: false
@@ -196,7 +205,7 @@ list_fields(wb)
 #| warning: false
 #| message: false
 #| error: false
-#| output-location: slide
+
 OR_wb <- arcgislayers::arc_select(
   wb, 
   fields = c("FEATURE", "NAME", "STATE"), 
@@ -208,7 +217,7 @@ head(OR_wb)
 ## Arcgislayers
 
 - We can also use `sf` features to use as a spatial query template for pulling in ESRI REST service layers
-- Here we pass a similar `arc_select` query as last time for but apply a spatial filter of for waterbodies in Oregon
+- Here we pass a similar `arc_select` query as last time but apply a spatial filter on waterbodies to filter to just those in Oregon
 - We get the state boundary using the `AOI` package
 
 ```{r}
@@ -270,7 +279,7 @@ mapview::mapview(rcra_pdx)
 
 ## Arcgislayers
 
--   Here we usethe `AOI` package for convenience georeferencing to get the spatial boundary of Benton County in Oregon to use as a spatial filter
+-   Here we use the `AOI` package for convenience georeferencing to get the spatial boundary of Benton County in Oregon to use as a spatial filter
 
 ```{r}
 #| warning: false
@@ -329,20 +338,48 @@ mapview::mapview(unemployment_multnomah, zcol = "T_UNEMPPCT")
 
 ## STAC and COG
 
-[Spatio-Temporal Asset Catalogs (STAC)](https://stacspec.org/en) and [Cloud-Optimized Geotiffs (COG)](https://www.cogeo.org/)
+- [Spatio-Temporal Asset Catalogs (STAC)](https://stacspec.org/en) are a specification and an API and [Cloud-Optimized Geotiffs (COG)](https://www.cogeo.org/) are a cloud native geospatial format
+- Rather than downloading GB worth of data locally, we can collect data from large cloud-based rasters via spatial, temporal and attribute queries 
 
+## STAC and COG
 
-- STAC and COG are specifications we can use to extract data from large typically raster datasets 
-- Rather than downloading GB worth of data locally we can collect data from large rasters via spatial, temporal and attribute queries
+- There are currently petabytes of satellite imagery collections from satellite imagery missions like Landsat and Copernicus, as well as troves of national and global scale raster data we can access remotely in cloud-native geospatial format
+- There are a number of other cloud-native geospatial formats that we don't have time to cover today which include:
+  - Zarr
+  - Flatgeobuff
+  - GeoParquet
+  - Cloud-optimized HDF5 and NetCDF
+  - Cloud-optimized Point Clouds (COPG)
+  
+## STAC
 
-STAC https://stacspec.org/en/tutorials/1-download-data-using-r/
+- [STAC](https://stacspec.org/) is just a specification and an ecosystem to describe and work with geospatial information assets in a cloud-native way using[STAC specifications](https://github.com/radiantearth/stac-spec) and the [STAC API](https://github.com/radiantearth/stac-api-spec)
+- Currently for working with [STAC resources in R](https://stacindex.org/ecosystem?language=R) there is just `rstac` and an in-development package `stat4cast` for forecast data
 
-https://r-spatial.org/r/2021/04/23/cloud-based-cubes.html
+## What is cloud-optimized?
+
+- Uses 2 key technologies:
+   - storing and organizing pixels in optimized way
+   - using HTTP GET range requests to access just portions of a file needed
+- Supports partial reads and parallel reads
 
 ## COGs
 
--   Uses 2 key technologies:
-    -   storing and organizing pixels in optimzed way
-    -   using HTTP GET range requests to access just portions of a file needed
+:::: {.columns}
 
-https://frodriguezsanchez.net/post/accessing-data-from-large-online-rasters-with-cloud-optimized-geotiff-gdal-and-terra-r-package/
+::: {.column width="50%"}
+- COGs are just raster data representing a slice in time of gridded data such as digital elevation models (DEMs) or land cover or climate
+:::
+
+::: {.column width="50%"}
+![](tile-diagram.png) 
+:::
+
+::::
+
+## Resouces
+
+- [STAC](https://stacspec.org/en/tutorials/1-download-data-using-r/)
+- [Processing satelitte data using STAC and COG in R](https://r-spatial.org/r/2021/04/23/cloud-based-cubes.html)
+- [STAC Catalogs](https://stacindex.org/catalogs#/)
+- [COGs with gdal and terra in R](https://frodriguezsanchez.net/post/accessing-data-from-large-online-rasters-with-cloud-optimized-geotiff-gdal-and-terra-r-package/)
