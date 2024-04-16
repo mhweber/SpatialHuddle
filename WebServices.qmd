@@ -23,9 +23,10 @@ execute:
 
 ## Outline
 
--   Accessing data with RESTful APIs in R
--   Accessing ESRI REST services in R
--   Accessing cloud-optimized geospatial data (COGS) via STAC (Spatial-Temporal Asset Catalogs) R
+- Accessing data with RESTful APIs in R
+- Accessing ESRI REST services in R
+- Accessing STAC (Spatial-Temporal Asset Catalogs) in R
+- Accessing and workign with Cloud-Optimized GeoTiffs (COGS) in R 
 
 ## APIs, Web Services, REST, HTTP? 
 
@@ -50,6 +51,7 @@ execute:
 - Here I'll show a basic example of a `GET` request using `httr2` package
 ```{r}
 req <- httr2::request("https://echodata.epa.gov/echo/dfr_rest_services.get_dfr?output=JSON")
+print(req)
 ```
 
 ## ECHO  data using Web Service
@@ -66,6 +68,7 @@ httr2::curl_translate("curl -X 'GET' \
   'https://echodata.epa.gov/echo/dfr_rest_services.get_dfr?output=JSON&p_id=110042133367&p_system=FRS&p_gt5yr=N' \
   -H 'accept: application/json'")
 ```
+
 ## ECHO data using Web Service
 
 - Then we take the result from `curl_translate` to generate a simple non-spatial request 
@@ -155,8 +158,8 @@ collections$collections |> dplyr::select(title) |>
 
 ## ESRI REST Services the hard way
 
-- Here we'll just query a USA Waterbodies ESRI REST service layers using `httr`
-- Note we have to figure out how to parameterize our request body - *this can be a huge pain!!*
+- Here we'll just query a USA Waterbodies ESRI REST service layer using `httr`
+- Note we have to figure out how to parameterize our request body - *this can be frustrating!*
 
 ```{r}
 #| output-location: slide
@@ -199,18 +202,15 @@ list_fields(wb)
 
 ## Arcgislayers
 
-- Here's we'll subset to Oregon just as we did with the `httr` query in the previous slide but using `arc_select` in `arcgislayers`
+- Again subset spatially to Oregon but using `arc_select` in `arcgislayers`
 
 ```{r}
 #| warning: false
 #| message: false
 #| error: false
 
-OR_wb <- arcgislayers::arc_select(
-  wb, 
-  fields = c("FEATURE", "NAME", "STATE"), 
-  where = "STATE = 'OR'"
-)
+OR_wb <- arcgislayers::arc_select(wb, fields = c("FEATURE", "NAME", "STATE"), 
+  where = "STATE = 'OR'")
 head(OR_wb)
 ```
 
@@ -310,7 +310,7 @@ unemployment
 ```
 
 ## Arcgislayers
-Look at table to figure out field query options
+Again we can use `list_fields` to figure out field query options
 
 ```{r}
 #| warning: false
@@ -321,8 +321,8 @@ list_fields(unemployment)
 
 ## Arcgislayers
 
--   Use `AOI` to get a county spatial boundary for a filter
--   Pass that spatial filter to `arc_select` for EJSCREEN food access service layer
+-   Use `AOI` to get a county spatial boundary for a filter (this time Multnomah county around Portland, Oregon)
+-   Pass that spatial filter to `arc_select` for an EJSCREEN socioeconomic indicators layer
 
 ```{r}
 #| warning: false
@@ -343,8 +343,8 @@ mapview::mapview(unemployment_multnomah, zcol = "T_UNEMPPCT")
 
 ## STAC and COG
 
-- There are currently petabytes of satellite imagery collections from satellite imagery missions like Landsat and Copernicus, as well as troves of national and global scale raster data we can access remotely in cloud-native geospatial format
-- There are a number of other cloud-native geospatial formats that we don't have time to cover today which include:
+- There are currently petabytes of satellite imagery collections from satellite and national and global scale raster data we can access remotely in cloud-native geospatial format
+- Many other cloud-native geospatial formats that we don't have time to cover today which include:
   - Zarr
   - Flatgeobuff
   - GeoParquet
@@ -353,10 +353,10 @@ mapview::mapview(unemployment_multnomah, zcol = "T_UNEMPPCT")
   
 ## STAC
 
-- [STAC](https://stacspec.org/) is just a specification and an ecosystem to describe and work with geospatial information assets in a cloud-native way using[STAC specifications](https://github.com/radiantearth/stac-spec) and the [STAC API](https://github.com/radiantearth/stac-api-spec)
+- [STAC](https://stacspec.org/) is just a specification and an ecosystem to describe and work with geospatial information assets in a cloud-native way using [STAC specifications](https://github.com/radiantearth/stac-spec) and the [STAC API](https://github.com/radiantearth/stac-api-spec)
 - Currently for working with [STAC resources in R](https://stacindex.org/ecosystem?language=R) there is just `rstac` and an in-development package `stat4cast` for forecast data
 
-## What is cloud-optimized?
+## What does Cloud-Optimized Geotiff (COG) mean?
 
 - Uses 2 key technologies:
    - storing and organizing pixels in optimized way
@@ -376,6 +376,34 @@ mapview::mapview(unemployment_multnomah, zcol = "T_UNEMPPCT")
 :::
 
 ::::
+
+## STAC resources in R using `rstac`
+
+- [rstac](https://brazil-data-cube.github.io/rstac/) implements a number of STAC endpoints that can be used to retrieve information from a STAC API service
+  - Here we demonstrate querying the [Earth Search API](https://www.element84.com/earth-search)
+  - Note there are a number of other STAC services such as [Microsoft Planetary Computer STAC API](https://stacindex.org/catalogs/microsoft-pc#/) we could use
+   
+```{r}
+#| output-location: slide
+library(rstac)
+s = stac("https://earth-search.aws.element84.com/v0")
+
+items <- s  |> 
+    stac_search(collections = "sentinel-s2-l2a-cogs",
+                bbox = c(-123.4,44.5,-123.2,44.6), # Corvallis
+                datetime = "2023-04-01/2023-07-30",
+                limit = 10)  |> 
+    post_request() 
+
+print(items)
+```
+
+## STAC resources in R using `rstac`
+```{r}
+s_obj <- stac("https://planetarycomputer.microsoft.com/api/stac/v1/collections/daymet-annual-na")
+result <- get_request(s_obj)
+```
+
 
 ## Resouces
 
