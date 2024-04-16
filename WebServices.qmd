@@ -381,7 +381,6 @@ mapview::mapview(unemployment_multnomah, zcol = "T_UNEMPPCT")
 
 - [rstac](https://brazil-data-cube.github.io/rstac/) implements a number of STAC endpoints that can be used to retrieve information from a STAC API service
   - Here we demonstrate querying the [Earth Search API](https://www.element84.com/earth-search)
-  - Note there are a number of other STAC services such as [Microsoft Planetary Computer STAC API](https://stacindex.org/catalogs/microsoft-pc#/) we could use
    
 ```{r}
 #| output-location: slide
@@ -399,9 +398,23 @@ print(items)
 ```
 
 ## STAC resources in R using `rstac`
+
+- We can see in previous slide what we get back from our request is a list with metadata as well as a list of features
+- Each feature is an image with an identifier, bounding box, date, cloud cover, etc)
+- If we print  links to imagery assets they are just URLs of GeoTIFF files located on an AWS S3 bucket.
 ```{r}
-s_obj <- stac("https://planetarycomputer.microsoft.com/api/stac/v1/collections/daymet-annual-na")
-result <- get_request(s_obj)
+print(items$features[[1]]$assets$B04$type)
+print(items$features[[1]]$assets$B04$href)
+```
+
+## Reading COG file from STAC URL using `vsicurl`
+
+- Reading COGs in R can be done in a couple ways but using GDAL [virtual file system](https://gdal.org/user/virtual_file_systems.html)is a super quick and easy way to read in combined with `terra`
+```{r}
+#| output-location: slide
+cog.url <- "/vsicurl/https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/10/T/DQ/2023/4/S2A_10TDQ_20230425_0_L2A/B04.tif"
+sent <- terra::rast(cog.url)
+sent
 ```
 
 
