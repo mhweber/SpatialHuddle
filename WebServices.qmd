@@ -47,15 +47,9 @@ execute:
 -   built for working with most modern web APIs.
 -   `jsonlite` also used as a JSON parser and generator
 
-## ECHO data using Web Service
-- Here I'll show a basic example of a `GET` request using `httr2` package
-```{r}
-req <- httr2::request("https://echodata.epa.gov/echo/dfr_rest_services.get_dfr?output=JSON")
-print(req)
-```
-
 ## ECHO  data using Web Service
 
+- Here I'll show a basic example of a `GET` request using `httr2` package
 - We structure a request following parameters in the [ECHO detailed facility report API documentation](https://echo.epa.gov/tools/web-services/detailed-facility-report#/Detailed%20Facility%20Report/get_dfr_rest_services_get_dfr)
 - First off, we can use `curl_translate` to generate an example query for `httr` from ECHO API documentation
 
@@ -114,7 +108,7 @@ ggplot2::ggplot(Corvallis_roads) +
 ## Spatial data via web services in a package
 
 - Access hydrology data using the [Network-Linked Data Index (NLDI) Service](https://waterdata.usgs.gov/blog/nldi-intro/) 
-- Here we demonstrate using the service with the `nhdplusTools` package as well as pulling in an area of interest with the `AOI` package
+- Here we demonstrate using the NLDI service with the `nhdplusTools` package as well as pulling in an area of interest with the `AOI` package
 
 ```{r}
 #| output-location: slide
@@ -126,14 +120,42 @@ corvallis_hydro$gages <- nhdplusTools::get_nwis(AOI::aoi_get(state="OR",county="
 mapview::mapview(corvallis_hydro)
 ```
 
+## Pull in landscape data for hydrology data via an API
 
-## geoconnex
-
+- We can add in watershed data using another API we've developed for accessing [StreamCat](https://www.epa.gov/national-aquatic-resource-surveys/streamcat-dataset) data using the [StreamCatTools](https://usepa.github.io/StreamCatTools/) R package
+- Here we'll add in the % impervious for each stream reach in the watershed using [National Land Cover Database (NLCD) 2019 Impervious data](https://www.mrlc.gov/home)
 
 ```{r}
 #| warning: false
 #| message: false
 #| error: false
+#| output-location: slide
+comids <- paste(as.integer(corvallis_hydro$flowline$comid), collapse=",",sep="")
+
+df <- StreamCatTools::sc_get_data(metric='PctImp2019', aoi='catchment', comid=comids)
+
+flowlines <- corvallis_hydro$flowline
+flowlines$PCTIMP2019CAT <- df$PCTIMP2019CAT[match(flowlines$comid, df$COMID)]
+
+mapview::mapview(flowlines, zcol = "PCTIMP2019CAT", legend = TRUE)
+```
+
+## Elevation data via API
+
+- Another API available in [elevatr](https://github.com/jhollist/elevatr) is the [USGS Elevation Point Query Service](https://apps.nationalmap.gov/epqs/)
+- We can use this to quickly map elevation to the hydrology data in previous slide
+
+
+## geoconnex
+
+- [geoconnex](https://reference.geoconnex.us/) is essentially a catalog of reference features with Uniform Resource Identifiers (URIs) to easily ingest programmatically using an [OGC API](https://www.ogc.org/standards/ogcapi-features) implementation
+- We can see current geoconnex features by reading in the json of existing collections
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| 
 collection_url <- "https://reference.geoconnex.us/collections"
 collections <- jsonlite::fromJSON(collection_url)
 
@@ -143,11 +165,57 @@ collections$collections |> dplyr::select(title) |>
 
 ## geoconnex
 
+- We can see a listing of features in a particular collection - in this case rivers that are part of the 'mainstems' collection in geoconnex
+
 ```{r}
 #| warning: false
 #| message: false
 #| error: false
+#| output-location: slide
+mainstems_url <- "https://reference.geoconnex.us/collections/mainstems/items?f=jsonld"
+mainstems_list <- jsonlite::fromJSON(mainstems_url)
+head(mainstems_list$features)
+```
 
+## geoconnex
+- An example of leveraging `geoconnex` is grabbing a particular river in it's entirety by it's unique identifier 
+- We can then get discharge information for the river via a web service as well - in this case using a function I'm not showing here (a bit long) using the USGS SensorThings API
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| echo: false
+latest_obs_by_mainstem <- function(mainstem_uri){
+  url <- paste0(
+    "https://labs.waterdata.usgs.gov/sta/v1.1/", #USGS SensorThings API Endpoint
+    "Locations?$filter=properties/mainstemURL%20eq%20%27", # Filter locations by mainstem URI
+    mainstem_uri, #pipe in desired URI from function parameter
+    "%27&$expand=Things($select=id)", #Get the gage at the location
+    "/Datastreams($filter=properties/ParameterCode%20eq%20%2700060%27;$select=description)", #get discharge data
+    "/Observations($top=1;$select=result,phenomenonTime;$orderBy=phenomenonTime%20desc)", #get the most recent reading
+    "&$resultFormat=GeoJSON" #return as GeoJSON
+  )
+  
+  result <- sf::read_sf(url)
+  result$discharge_cfs <- as.numeric(result$`Things/0/Datastreams/0/Observations/0/result`)
+  result <- result[which(!is.na(result$discharge_cfs)),]
+  return(result)
+}
+```
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| output-location: slide
+colorado_river <- sf::read_sf("https://geoconnex.us/ref/mainstems/29559")
+## add Colorado River discharges
+discharge <- latest_obs_by_mainstem("https://geoconnex.us/ref/mainstems/29559")
+m <- mapview::mapview(colorado_river,color="blue") 
+m <- m + mapview::mapview(discharge,zcol='discharge_cfs',layer.name="latest discharge on Colorado River")
+m
+mapview::mapview(colorado_river)
 ```
 
 ## ESRI REST Services
@@ -177,8 +245,8 @@ mapview::mapview(wb, col.regions='light blue',map.types = "OpenStreetMap")
 
 
 ## Arcgislayers
--   Example from [GitHub repo for arcgislayers](https://github.com/R-ArcGIS/arcgislayers)
--   This example reads ESRI Rest service for the same waterbody features as above
+-   Example here is from the [GitHub repo for arcgislayers](https://github.com/R-ArcGIS/arcgislayers)
+-   This example reads in the ESRI Rest service for the same waterbody features as the previous example
 
 ```{r}
 #| warning: false
@@ -202,12 +270,13 @@ list_fields(wb)
 
 ## Arcgislayers
 
-- Again subset spatially to Oregon but using `arc_select` in `arcgislayers`
+- We can subset spatially this REST service to Oregon as we did in previous example but using `arc_select` in `arcgislayers` instead
 
 ```{r}
 #| warning: false
 #| message: false
 #| error: false
+#| smaller: true
 
 OR_wb <- arcgislayers::arc_select(wb, fields = c("FEATURE", "NAME", "STATE"), 
   where = "STATE = 'OR'")
@@ -250,7 +319,7 @@ rcra
 
 ## Arcgislayers
 
- - Again use `list_fields` to figure out field query options
+- Again we use `list_fields` to figure out field query options
 
 ```{r}
 #| warning: false
@@ -279,7 +348,7 @@ mapview::mapview(rcra_pdx)
 
 ## Arcgislayers
 
--   Here we use the `AOI` package for convenience georeferencing to get the spatial boundary of Benton County in Oregon to use as a spatial filter
+- Here we use the `AOI` package for convenience georeferencing to get the spatial boundary of Benton County in Oregon to use as a spatial filter
 
 ```{r}
 #| warning: false
@@ -296,13 +365,12 @@ mapview::mapview(rcra_benton)
 
 ## Arcgislayers
 
--   Use `arc_open` to read in one of the many layers available as EJSCREEN REST layers
+- Here we again use `arc_open` to read in one of the many layers available as EJSCREEN REST layers
 
 ```{r}
 #| warning: false
 #| message: false
 #| error: false
-#| output-location: slide
 url <- "https://ejscreen.epa.gov/ArcGIS/rest/services/ejscreen/socioeconomic_indicators_2023_public/MapServer/4"
 
 unemployment <- arc_open(url)
@@ -356,7 +424,7 @@ mapview::mapview(unemployment_multnomah, zcol = "T_UNEMPPCT")
 - [STAC](https://stacspec.org/) is just a specification and an ecosystem to describe and work with geospatial information assets in a cloud-native way using [STAC specifications](https://github.com/radiantearth/stac-spec) and the [STAC API](https://github.com/radiantearth/stac-api-spec)
 - Currently for working with [STAC resources in R](https://stacindex.org/ecosystem?language=R) there is just `rstac` and an in-development package `stat4cast` for forecast data
 
-## What does Cloud-Optimized Geotiff (COG) mean?
+## What does [Cloud-Optimized Geotiffs (COG)](https://www.cogeo.org/) mean?
 
 - Uses 2 key technologies:
    - storing and organizing pixels in optimized way
@@ -380,7 +448,7 @@ mapview::mapview(unemployment_multnomah, zcol = "T_UNEMPPCT")
 ## STAC resources in R using `rstac`
 
 - [rstac](https://brazil-data-cube.github.io/rstac/) implements a number of STAC endpoints that can be used to retrieve information from a STAC API service
-  - Here we demonstrate querying the [Earth Search API](https://www.element84.com/earth-search)
+- Here we demonstrate querying the [Earth Search API](https://www.element84.com/earth-search) to retrieve Sentinel 2 stored as a COG using the STAC API
    
 ```{r}
 #| output-location: slide
@@ -409,12 +477,12 @@ print(items$features[[1]]$assets$B04$href)
 
 ## Reading COG file from STAC URL using `vsicurl`
 
-- Reading COGs in R can be done in a couple ways but using GDAL [virtual file system](https://gdal.org/user/virtual_file_systems.html)is a super quick and easy way to read in combined with `terra`
+- Reading COGs in R can be done in a couple ways but using the [Geospatial Data Abstraction Library (GDAL)](https://gdal.org/index.html) [virtual file system](https://gdal.org/user/virtual_file_systems.html) is a super quick and easy way to read COGs into R with `terra`
 ```{r}
 #| output-location: slide
 cog.url <- "/vsicurl/https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/10/T/DQ/2023/4/S2A_10TDQ_20230425_0_L2A/B04.tif"
-sent <- terra::rast(cog.url)
-sent
+sentinel_band4 <- terra::rast(cog.url)
+sentinel_band4
 ```
 
 
