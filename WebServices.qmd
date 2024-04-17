@@ -140,12 +140,6 @@ flowlines$PCTIMP2019CAT <- df$PCTIMP2019CAT[match(flowlines$comid, df$COMID)]
 mapview::mapview(flowlines, zcol = "PCTIMP2019CAT", legend = TRUE)
 ```
 
-## Elevation data via API
-
-- Another API available in [elevatr](https://github.com/jhollist/elevatr) is the [USGS Elevation Point Query Service](https://apps.nationalmap.gov/epqs/)
-- We can use this to quickly map elevation to the hydrology data in previous slide
-
-
 ## geoconnex
 
 - [geoconnex](https://reference.geoconnex.us/) is essentially a catalog of reference features with Uniform Resource Identifiers (URIs) to easily ingest programmatically using an [OGC API](https://www.ogc.org/standards/ogcapi-features) implementation
@@ -485,6 +479,14 @@ sentinel_band4 <- terra::rast(cog.url)
 sentinel_band4
 ```
 
+## Reading COG file from STAC URL using `vsicurl`
+```{r}
+sentinal_corvallis <- terra::extract(sentinel_band4, corvallis)
+plot(sentinel_band4)
+```
+
+
+## Reading COG file from STAC URL using `vsicurl`
 
 ## Resouces
 
