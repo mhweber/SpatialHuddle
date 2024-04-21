@@ -24,9 +24,10 @@ execute:
 ## Outline
 
 - Accessing data with RESTful APIs in R
+- Accessing spatial data using packages in R that wrap web services
 - Accessing ESRI REST services in R
-- Accessing STAC (Spatial-Temporal Asset Catalogs) in R
-- Accessing and workign with Cloud-Optimized GeoTiffs (COGS) in R 
+- Accessing spatial data via STAC (Spatial-Temporal Asset Catalogs) in R
+- Accessing and working with Cloud-Optimized GeoTiffs (COGS) in R 
 
 ## APIs, Web Services, REST, HTTP? 
 
@@ -51,7 +52,7 @@ execute:
 
 - Here I'll show a basic example of a `GET` request using `httr2` package
 - We structure a request following parameters in the [ECHO detailed facility report API documentation](https://echo.epa.gov/tools/web-services/detailed-facility-report#/Detailed%20Facility%20Report/get_dfr_rest_services_get_dfr)
-- First off, we can use `curl_translate` to generate an example query for `httr` from ECHO API documentation
+- First off, we can use `curl_translate` to generate an example query for `httr2` from ECHO API documentation
 
 ```{r}
 #| warning: false
@@ -125,6 +126,8 @@ mapview::mapview(corvallis_hydro)
 - We can add in watershed data using another API we've developed for accessing [StreamCat](https://www.epa.gov/national-aquatic-resource-surveys/streamcat-dataset) data using the [StreamCatTools](https://usepa.github.io/StreamCatTools/) R package
 - Here we'll add in the % impervious for each stream reach in the watershed using [National Land Cover Database (NLCD) 2019 Impervious data](https://www.mrlc.gov/home)
 
+## Pull in landscape data for hydrology data via an API
+
 ```{r}
 #| warning: false
 #| message: false
@@ -140,16 +143,49 @@ flowlines$PCTIMP2019CAT <- df$PCTIMP2019CAT[match(flowlines$comid, df$COMID)]
 mapview::mapview(flowlines, zcol = "PCTIMP2019CAT", legend = TRUE)
 ```
 
+## Feddata
+
+- Another of many great R packages for easily ingesting online spatial datasets in R is [feddata](https://docs.ropensci.org/FedData/) 
+- A quick example of using `feddata` is reading in the [National Land Cover Database (NLCD)](https://www.mrlc.gov/) cropped to the outline feature we created for Corvallis, Oregon
+
+```{r}
+#| message: false
+#| error: false
+#| output-location: slide
+NLCD <- FedData::get_nlcd(
+  template = corvallis,
+  year = 2021,
+  label = "Corvallis"
+)
+
+terra::plot(NLCD)
+```
+
+## Feddata
+
+- Another example of using `feddata` is reading in the [National Elevation Data](https://ned.usgs.gov/) also cropped to Corvallis, Oregon
+
+```{r}
+#| message: false
+#| error: false
+#| output-location: slide
+NED <- FedData::get_ned(
+  template = corvallis,
+  label = "Corvallis"
+)
+terra::plot(NED)
+```
+
 ## geoconnex
 
 - [geoconnex](https://reference.geoconnex.us/) is essentially a catalog of reference features with Uniform Resource Identifiers (URIs) to easily ingest programmatically using an [OGC API](https://www.ogc.org/standards/ogcapi-features) implementation
 - We can see current geoconnex features by reading in the json of existing collections
 
+## geoconnex
 ```{r}
 #| warning: false
 #| message: false
 #| error: false
-#| 
 collection_url <- "https://reference.geoconnex.us/collections"
 collections <- jsonlite::fromJSON(collection_url)
 
@@ -172,7 +208,7 @@ head(mainstems_list$features)
 ```
 
 ## geoconnex
-- An example of leveraging `geoconnex` is grabbing a particular river in it's entirety by it's unique identifier 
+- One example of leveraging `geoconnex` is grabbing a particular river in it's entirety by it's unique identifier 
 - We can then get discharge information for the river via a web service as well - in this case using a function I'm not showing here (a bit long) using the USGS SensorThings API
 
 ```{r}
@@ -209,7 +245,6 @@ discharge <- latest_obs_by_mainstem("https://geoconnex.us/ref/mainstems/29559")
 m <- mapview::mapview(colorado_river,color="blue") 
 m <- m + mapview::mapview(discharge,zcol='discharge_cfs',layer.name="latest discharge on Colorado River")
 m
-mapview::mapview(colorado_river)
 ```
 
 ## ESRI REST Services
@@ -264,7 +299,7 @@ list_fields(wb)
 
 ## Arcgislayers
 
-- We can subset spatially this REST service to Oregon as we did in previous example but using `arc_select` in `arcgislayers` instead
+- Subset spatially to Oregon but using `arc_select` in `arcgislayers` instead
 
 ```{r}
 #| warning: false
@@ -446,15 +481,14 @@ mapview::mapview(unemployment_multnomah, zcol = "T_UNEMPPCT")
    
 ```{r}
 #| output-location: slide
-library(rstac)
-s = stac("https://earth-search.aws.element84.com/v0")
+s = rstac::stac("https://earth-search.aws.element84.com/v0")
 
 items <- s  |> 
-    stac_search(collections = "sentinel-s2-l2a-cogs",
-                bbox = c(-123.4,44.5,-123.2,44.6), # Corvallis
-                datetime = "2023-04-01/2023-07-30",
+    rstac::stac_search(collections = "sentinel-s2-l2a-cogs",
+                bbox = c(-124.4,43.5,-122.2,45.6), # Corvallis
+                datetime = "2020-05-01/2020-09-30",
                 limit = 10)  |> 
-    post_request() 
+    rstac::post_request() 
 
 print(items)
 ```
@@ -465,32 +499,154 @@ print(items)
 - Each feature is an image with an identifier, bounding box, date, cloud cover, etc)
 - If we print  links to imagery assets they are just URLs of GeoTIFF files located on an AWS S3 bucket.
 ```{r}
-print(items$features[[1]]$assets$B04$type)
-print(items$features[[1]]$assets$B04$href)
+print(items$features[[5]]$assets$B04$type)
+print(items$features[[5]]$assets$B04$href)
 ```
 
 ## Reading COG file from STAC URL using `vsicurl`
 
-- Reading COGs in R can be done in a couple ways but using the [Geospatial Data Abstraction Library (GDAL)](https://gdal.org/index.html) [virtual file system](https://gdal.org/user/virtual_file_systems.html) is a super quick and easy way to read COGs into R with `terra`
+- Reading COGs in R can be done in a couple ways but using the [Geospatial Data Abstraction Library (GDAL)](https://gdal.org/index.html) [virtual file system](https://gdal.org/user/virtual_file_systems.html) is a quick and easy way to read COGs into R with the `terra` package
+- There are several 'flavors' of GDAL virtual file systems for accessing files stored on either public or private networks or cloud storage platforms
+
+## Reading COG file from STAC URL using `vsicurl`
+
+- Three of the most useful virtual file system formats for common spatial data tasks include:
+
+  - vsizip –> file handler that allows reading ZIP archives on-the-fly without decompressing them beforehand.
+
+  - vsicurl –> A generic file system handler exists for online resources that do not require particular signed authentication schemes
+
+  - vsis3 –> specialized into sub-filesystems for commercial cloud storage services (e.g. AWS, also see /vsigs/, /vsiaz/, /vsioss/ or /vsiswift/)
+  
+  
+## Reading COG file from STAC URL using `vsicurl`
 ```{r}
 #| output-location: slide
-cog.url <- "/vsicurl/https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/10/T/DQ/2023/4/S2A_10TDQ_20230425_0_L2A/B04.tif"
+cog.url <- "/vsicurl/https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/10/T/EQ/2020/9/S2B_10TEQ_20200929_0_L2A/B04.tif"
 sentinel_band4 <- terra::rast(cog.url)
 sentinel_band4
 ```
 
 ## Reading COG file from STAC URL using `vsicurl`
-```{r}
-sentinal_corvallis <- terra::extract(sentinel_band4, corvallis)
-plot(sentinel_band4)
-```
 
+- Sentinel data is big, let's show another example from [Microsoft Planetary Computer](https://planetarycomputer.microsoft.com/) 
+- We'll bring in a feature from the  [USGS Land Change Monitoring, Assessment, and Projection (LCMAP) collection](https://planetarycomputer.microsoft.com/dataset/usgs-lcmap-conus-v13) following example [here](https://stacspec.org/en/tutorials/1-download-data-using-r/)
+- First we'll derive the bounding box directly from our area of interest
 
 ## Reading COG file from STAC URL using `vsicurl`
 
+```{r}
+corvallis_bbox <- corvallis |>
+  sf::st_transform(4326) |> # provide in WGS84
+  sf::st_bbox()
+corvallis_bbox
+```
+
+## Reading COG file from STAC URL using
+
+- Pass our bounding box to the bounding box argument for `stac_search` to filter STAC results
+```{r}
+#| output-location: slide
+s <- rstac::stac("https://planetarycomputer.microsoft.com/api/stac/v1")
+
+stac_query <- rstac::stac_search(
+  q = s,
+  collections = "usgs-lcmap-conus-v13",
+  bbox = corvallis_bbox,
+  datetime = "2021-01-01/2021-12-31"
+)
+items <- rstac::get_request(stac_query)
+items$features[[1]]
+```
+
+## Reading COG file from STAC URL using
+
+- We can extract the url to pass to GDAL vsicurl using `assets_url` from `rstac`
+
+```{r}
+lcpri_url <- rstac::assets_url(items, "lcpri")
+lcpri_url
+```
+
+## Reading COG file from STAC URL using `vsicurl`
+
+- We'll use a couple functions (not listed out here) to construct the GDAL vsicurl URL and use `gdal_utils` to download and reproject the asset
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| echo: false
+make_vsicurl_url <- function(base_url) {
+  paste0(
+    "/vsicurl", 
+    "?pc_url_signing=yes",
+    "&pc_collection=usgs-lcmap-conus-v13",
+    "&url=",
+    base_url
+  )
+}
+```
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| echo: false
+lcpri_url <- make_vsicurl_url(lcpri_url)
+out_file <- tempfile(fileext = ".tif")
+sf::gdal_utils(
+  "warp",
+  source = lcpri_url,
+  destination = out_file,
+  options = c(
+    "-t_srs", sf::st_crs(corvallis)$wkt,
+    "-te", sf::st_bbox(corvallis)
+  )
+)
+```
+
+```{r}
+#| output-location: slide
+temp <- terra::rast(out_file)
+mapview::mapview(temp)
+```
+
+## COG without STAC
+
+- STAC is a *specification and an API* - COGS are a *format*
+- We can read COGs directly using GDAL virtual file systems without using STAC
+- **Remember!** - all we need to do is add `/vsicurl/` prefix before the path to the file
+
+## COG without STAC
+- Here is an example directly from [Geocomputation with R](https://r.geocompx.org/)
+- This is a global monthly December snow probability raster at 500m resolution stored as a COG file at [zenodo.org](https://zenodo.org/record/5774954/files/clm_snow.prob_esacci.dec_p.90_500m_s0..0cm_2000..2012_v2.0.tif)     
+
+```{r}
+#| output-location: slide
+url = paste0("/vsicurl/https://zenodo.org/record/5774954/files/",
+               "clm_snow.prob_esacci.dec_p.90_500m_s0..0cm_2000..2012_v2.0.tif")
+snow = terra::rast(url)
+snow
+```
+
+## COG without STAC
+
+- **Important point** - we are simply creating a *connection* to this COG - we are not reading this file to our RAM yet
+- Values will be read once we apply any value based operation like `crop` or `extract`
+
+```{r}
+#| output-location: slide
+corvallis_snow <- terra::crop(snow, corvallis_bbox)
+mapview::mapview(corvallis_snow)
+```
+
 ## Resouces
 
+- [httr2](https://github.com/r-lib/httr2)
+- [arcgislayers](https://github.com/R-ArcGIS/arcgislayers)
 - [STAC](https://stacspec.org/en/tutorials/1-download-data-using-r/)
+- [rstac](https://github.com/brazil-data-cube/rstac)
 - [Processing satelitte data using STAC and COG in R](https://r-spatial.org/r/2021/04/23/cloud-based-cubes.html)
 - [STAC Catalogs](https://stacindex.org/catalogs#/)
 - [COGs with gdal and terra in R](https://frodriguezsanchez.net/post/accessing-data-from-large-online-rasters-with-cloud-optimized-geotiff-gdal-and-terra-r-package/)
