@@ -1,0 +1,36 @@
+---
+title: "WhiteboxTools"
+author: "Marc Weber"
+date: "April 17, 2024"
+format: revealjs
+embed-resources: true
+editor: visual
+execute: 
+  eval: true
+  error: false
+  echo: true
+  warning: false
+  include: true
+  progress: true
+---
+
+## What is WhiteboxTools?
+
+- Advanced open source geospatial Analysis Software developed by [Prof. John Lindsey](https://jblindsay.github.io/ghrg/index.html)
+- Over 500 different geospatial tools
+- Inherently supports parallel processing
+- Doesn't rely on `gdal`!
+- Can be run as a stand alone simple application, run from scripting languages, or used as an add-on in geospatial software (e.g. ArcPro and QGIS)
+
+## What is WhiteboxTools (cont.)?
+
+- This of it as highly efficient, optimized set of additional tools for geospatial processing
+- Good for a number of typical GIS and remote sensing tasks
+- Focus on many specialized spatial hydrogrolic and LIDAR processing tasks
+- Not a cartographic or visualization tool; strictly an analytical processing toolset
+- We'll look at using with ArcPro, QGIS, Python, and see a worked example of R whitebox
+
+## Whiteboxtools wiht ArcPro
+
+
+
