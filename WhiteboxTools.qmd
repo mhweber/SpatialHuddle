@@ -34,6 +34,14 @@ execute:
 
 ![](WBT_command_prompt.png)
 
+## Whitebox Runner
+
+-   Run the `whitebox_runner.exe` file in directory where you downloaded WBT ![](WBR1.png)
+
+## Whitebox Runner
+
+![](WBR2.png)
+
 ## Whiteboxtools with ArcPro
 
 -   You can install an ArcPro toolbox frontend to the stand-alone executable back-end via the [GitHub repository maintained by Quisheng Wu](https://github.com/opengeos/WhiteboxTools-ArcGIS)
