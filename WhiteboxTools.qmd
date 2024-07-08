@@ -16,21 +16,26 @@ execute:
 
 ## What is WhiteboxTools?
 
-- Advanced open source geospatial Analysis Software developed by [Prof. John Lindsey](https://jblindsay.github.io/ghrg/index.html)
-- Over 500 different geospatial tools
-- Inherently supports parallel processing
-- Doesn't rely on `gdal`!
-- Can be run as a stand alone simple application, run from scripting languages, or used as an add-on in geospatial software (e.g. ArcPro and QGIS)
+-   Advanced open source geospatial Analysis Software developed by [Prof. John Lindsey](https://jblindsay.github.io/ghrg/index.html)
+-   Over 500 different geospatial tools
+-   Inherently supports parallel processing
+-   Doesn't rely on `gdal`!
+-   Can be run as a stand alone simple application, run from scripting languages, or used as an add-on in geospatial software (e.g. ArcPro and QGIS)
 
 ## What is WhiteboxTools (cont.)?
 
-- This of it as highly efficient, optimized set of additional tools for geospatial processing
-- Good for a number of typical GIS and remote sensing tasks
-- Focus on many specialized spatial hydrogrolic and LIDAR processing tasks
-- Not a cartographic or visualization tool; strictly an analytical processing toolset
-- We'll look at using with ArcPro, QGIS, Python, and see a worked example of R whitebox
+-   This of it as highly efficient, optimized set of additional tools for geospatial processing
+-   Good for a number of typical GIS and remote sensing tasks
+-   Focus on many specialized spatial hydrologic and LIDAR processing tasks
+-   Not a cartographic or visualization tool; strictly an analytical processing toolset
+-   We'll look at using in the stand-alone mode, with ArcPro, QGIS, Python, and see a worked example of using R `whitebox`
 
-## Whiteboxtools wiht ArcPro
+## Stand-alone mode
 
+![](WBT_command_prompt.png)
 
+## Whiteboxtools with ArcPro
 
+-   You can install an ArcPro toolbox frontend to the stand-alone executable back-end via the [GitHub repository maintained by Quisheng Wu](https://github.com/opengeos/WhiteboxTools-ArcGIS)
+-   Just download the zip file from the clone or download button on the repository
+-   Unzip locally and add the downloaded toolbox to your ArcPro toolbox
