@@ -1,7 +1,7 @@
 ---
 title: "WhiteboxTools"
 author: "Marc Weber"
-date: "April 17, 2024"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 format: revealjs
 embed-resources: true
 editor: visual
@@ -17,19 +17,21 @@ execute:
 ## What is WhiteboxTools?
 
 -   Advanced open source geospatial Analysis Software developed by [Prof. John Lindsey](https://jblindsay.github.io/ghrg/index.html)
--   Over 500 different geospatial tools
+-   ~ 500 different geospatial tools
 -   Inherently supports parallel processing
 -   Doesn't rely on `gdal`!
 -   Can be run as a stand alone simple application, run from scripting languages, or used as an add-on in geospatial software (e.g. ArcPro and QGIS)
 
 ## What is WhiteboxTools (cont.)?
 
--   This of it as highly efficient, optimized set of additional tools for geospatial processing
+-   Think of it as highly efficient, optimized set of additional tools for geospatial processing
 -   Good for a number of typical GIS and remote sensing tasks
 -   Focus on many specialized spatial hydrologic and LIDAR processing tasks
 -   Not a cartographic or visualization tool; strictly an analytical processing toolset
 -   We'll look at using in the stand-alone mode, with ArcPro, QGIS, Python, and see a worked example of using R `whitebox`
 
+## What is WhiteboxTools (cont.)?
+![](WBT Products.png)
 ## Stand-alone mode
 
 ![](WBT_command_prompt.png)
@@ -47,3 +49,29 @@ execute:
 -   You can install an ArcPro toolbox frontend to the stand-alone executable back-end via the [GitHub repository maintained by Quisheng Wu](https://github.com/opengeos/WhiteboxTools-ArcGIS)
 -   Just download the zip file from the clone or download button on the repository
 -   Unzip locally and add the downloaded toolbox to your ArcPro toolbox
+
+## Whiteboxtools with QGIS
+
+-   You can install Plugins in QGIS both for WhiteboxTools as well as Whitebox Workflows ![](QGIS_WBT.png)
+
+## Whiteboxtools with QGIS
+
+![](QGIS_WBT2.png)
+
+## Whiteboxtools in Python
+
+-   To use Whiteboxtools in Python you have two choices of Python libraries:
+    - whitebox_tools.py maintained by Quisheng Wu *or*
+    - Whitebox Workflows (WBW)
+    - whitebox_tools.py uses Whitebox Open Core
+    - WBW is supposed to provide a more natural Python interaction and improved performance over using whitebox_tools.py and Whitebox Open Core
+
+## Whiteboxtools in R
+
+- To use Whiteboxtools in R you can install the [R Whitebox package developed by Quisheng Wu](https://whiteboxr.gishub.org/) from CRAN or GitHub 
+  - install.packages("whitebox") 
+  or
+  - remotes::install_github("opengeos/whiteboxR", build = FALSE)
+  
+- You then either initialize your environment to where you downloaded the WhiteboxTools binary, or you can use the package supplied method to download the binary:
+  - whitebox::install_whitebox()
