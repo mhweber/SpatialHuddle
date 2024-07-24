@@ -1,0 +1,31 @@
+---
+title: "R Vitae package for data-driven CVs"
+author: "Marc Weber"
+format: revealjs
+editor: visual
+---
+
+## What is a data-driven CV?
+
+-   What we're talking about here is *automating CV and resume creation*
+-   We can use packages like [vitae](https://pkg.mitchelloharawild.com/vitae/) or [datadrivencv](https://nickstrayer.me/datadrivencv/)
+-   This is different than a *data-driven resume approach* such as described [here](https://www.linkedin.com/advice/0/how-can-you-make-your-resume-more-data-driven-analytical-gzgvc#:~:text=A%20data%2Ddriven%20resume%20is,by%20following%20these%20six%20tips.)
+    -   This approach is about concisely summarizing your experience backed by quantitative metrics and evidence
+
+## Using Data to Dynamically Build your CV
+
+-   Set up an automated pipeline where:
+    -   Your CV or resume is continuously and seamlessly updated
+    -   Input new data - render (compile / knit) - resume is updated!
+    -   Document production through code
+    -   Updates happen in tables or spreadsheets in the cloud (i.e. Google Sheets or OneDrive)
+    -   Updates to underlying *data* can feed multiple resumes / CVs if needed
+    -   Whenever underlying data changes, .Rmd is re-rendered
+
+## Under the Hood
+
+-   CV is constructed as an .Rmd
+-   The high-level information is in your yaml with key-value pairs
+-   Everything in the body of your CV / resume is in your code blocks - the tags in your code fencing in chunks are used by `vitae` and are matched with a corresponding header in a table with the information for that topic
+-   The entries for each section are a code block in your .Rmd `detailed_entries` parameters - this is all just a wrapper for `LaTex` template (this is the engine for constructing resume)
+-   The secret sauce: YAML front matter - R Markdown  - Pandoc - LaTex template 

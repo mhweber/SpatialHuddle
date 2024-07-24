@@ -1,7 +1,7 @@
 ---
 title: "WhiteboxTools"
 author: "Marc Weber"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+date: "July 10, 2024"
 format: revealjs
 embed-resources: true
 editor: visual
