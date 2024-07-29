@@ -1,0 +1,57 @@
+---
+title: "Blending open-source libraries in Python and R with ESRI"
+author: "Marc Weber"
+format: 
+  revealjs:
+    self-contained: true
+editor: visual
+jupyter: python3
+---
+
+## Context of CodeBase for StreamCat
+
+Quarto enables you to weave together content and executable code into a finished presentation. To learn more about Quarto presentations see <https://quarto.org/docs/presentations/>.
+
+## First show example of HyRiver querying StreamCat data
+
+```{python}
+#|echo: true
+#| output-location: slide
+from pygeohydro import NWIS, WBD
+from pynhd import NLDI, streamcat
+
+nldi = NLDI()
+upstream_network = nldi.navigate_byid(
+    "comid", 23763517, "upstreamTributaries", "flowlines", distance=9999
+)
+m = upstream_network.plot()
+m
+```
+## test
+```{python}
+m = upstream_network.explore()
+m
+```
+
+
+## Then show querying StreamCat using StreamCatTools
+
+
+## Show how we set up environment in Python
+
+When you click the **Render** button a document will be generated that includes:
+
+-   Content authored with markdown
+-   Output from executable code
+
+## Code
+
+When you click the **Render** button a presentation will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{python}
+#|echo: true
+1 + 1
+```
+
+## Brian Chastain link comparing `geopandas` and `spatially-enabled dataframes`
+[Comparing Python Geospatial Frameworks](https://github.com/bchastain/devsummit2023/blob/main/geodataframes.ipynb)
