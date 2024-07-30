@@ -8,6 +8,58 @@ editor: visual
 jupyter: python3
 ---
 
+## Watershed information in an API 
+- Generating watershed information can be complicated for large watersheds when the desired metrics are needed at many sites across a large geographic extent
+- For this reason we developed the [StreamCat](https://www.epa.gov/national-aquatic-resource-surveys/streamcat-dataset) and [LakeCat](https://www.epa.gov/national-aquatic-resource-surveys/lakecat-dataset) datasets
+
+## StreamCat and LakeCat
+
+::: columns
+
+::: {.column width="20%"}
+![](streamcattools-med-dpi.png)
+:::
+
+::: {.column width="40%"}
+- StreamCat:
+  - Watershed summaries of several hundred metrics for local catchments and watersheds
+  - Uses NHDPlusV2 (~2.6 million stream segments)
+  
+:::
+
+::: {.column width="40%"}
+- LakeCat 
+  - Watershed metrics for ~400,000 lakes across the conterminous U.S. 
+
+:::
+
+:::
+
+## StreamCat and LakeCat
+
+::: columns
+
+::: {.column width="50%"}
+![Geospatial framework of the StreamCat Dataset - from Hill et al. 2016](geospatialframework.png)
+
+:::
+
+::: {.column width="50%"}
+![Geospatial framework for LakeCat - from Hill et al. (2018)](offnetwork.png)
+
+:::
+
+:::
+
+## StreamCat and LakeCat
+
+
+- Both datasets are now accessible through the [StreamCatTools package](https://usepa.github.io/StreamCatTools/)
+
+- HyRiver
+
+
+
 ## Context of CodeBase for StreamCat
 
 Quarto enables you to weave together content and executable code into a finished presentation. To learn more about Quarto presentations see <https://quarto.org/docs/presentations/>.
