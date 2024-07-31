@@ -1,5 +1,5 @@
 ---
-title: "Blending open-source libraries in Python and R with ESRI"
+title: "Blending open-source libraries in Python and R with ESRI tools"
 author: "Marc Weber"
 format: 
   revealjs:
@@ -23,13 +23,14 @@ jupyter: python3
 ::: {.column width="40%"}
 - StreamCat:
   - Watershed summaries of several hundred metrics for local catchments and watersheds
-  - Uses NHDPlusV2 (~2.6 million stream segments)
+  - Uses NHDPlusV2 flowlines (~2.6 million stream segments)
   
 :::
 
 ::: {.column width="40%"}
 - LakeCat 
-  - Watershed metrics for ~400,000 lakes across the conterminous U.S. 
+  - Watershed summaries of several hundred metrics lakes 
+  - Uses NHDPlusV2 waterbodies (for ~400,000 lakes)
 
 :::
 
@@ -51,14 +52,17 @@ jupyter: python3
 
 :::
 
-## StreamCat and LakeCat
+## Accessing StreamCat and LakeCat
 
+- Both datasets are now accessible via an API through:
+  - A simple [leafmap interface]() and [menu interface]()
+  - [StreamCatTools package](https://usepa.github.io/StreamCatTools/)
+  - [pynhd]() which is part of the [HyRiver suite of Python packages]() that provide a unified API for retrieving hydro-climatic geospatial/temporal data from various web services 
 
-- Both datasets are now accessible through the [StreamCatTools package](https://usepa.github.io/StreamCatTools/)
+## Accessing StreamCat and LakeCat
 
-- HyRiver
-
-
+- We'll explore accessing the data via these tools in the next few slides
+- Then we'll walk through the underlying code base and tools demonstrating workflows using open source and ESRI tools in Python and R
 
 ## Context of CodeBase for StreamCat
 
