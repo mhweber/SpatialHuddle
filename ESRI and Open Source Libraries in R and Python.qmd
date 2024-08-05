@@ -13,6 +13,7 @@ execute:
   warning: false
   include: true
   progress: true
+jupyter: python3
 ---
 
 ## Outline
@@ -111,18 +112,9 @@ sc_get_data(comid = comid,
 
 ## [pynhd](https://docs.hyriver.io/readme/pynhd.html) in the [HyRiver suite of Python packages](https://docs.hyriver.io/index.html)
 
-```{r, echo=FALSE, warning=FALSE}
-library(reticulate)
-
-use_condaenv("HyRiver", conda="C:/Users/mweber/AppData/Local/miniforge3/envs/HyRiver", required = TRUE)
-```
-
 ```{python}
 #|echo: true
-#| output-location: slide
-from pygeohydro import NWIS
 from pynhd import NLDI, streamcat
-
 nldi = NLDI()
 upstream_network = nldi.navigate_byid(
     "comid", 23763517, "upstreamTributaries", "flowlines", distance=9999
