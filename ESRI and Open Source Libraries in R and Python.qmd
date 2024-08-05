@@ -4,76 +4,123 @@ author: "Marc Weber"
 format: 
   revealjs:
     self-contained: true
+embed-resources: true
 editor: visual
-jupyter: python3
+execute: 
+  eval: true
+  error: false
+  echo: true
+  warning: false
+  include: true
+  progress: true
 ---
 
-## Watershed information in an API 
-- Generating watershed information can be complicated for large watersheds when the desired metrics are needed at many sites across a large geographic extent
-- For this reason we developed the [StreamCat](https://www.epa.gov/national-aquatic-resource-surveys/streamcat-dataset) and [LakeCat](https://www.epa.gov/national-aquatic-resource-surveys/lakecat-dataset) datasets
+## Outline
+
+-   Review watershed information via an API with [StreamCat](https://www.epa.gov/national-aquatic-resource-surveys/streamcat-dataset) and [LakeCat](https://www.epa.gov/national-aquatic-resource-surveys/lakecat-dataset)
+-   Demonstrate StreamCat access in Python and R
+-   Give an overview of the Python codebase for StreamCat and LakeCat
+-   Explore more broadly the theme of integrating open source Python libraries, R and ESRI suite of tools in the context of StreamCat and LakeCat
+
+## Watershed information in an API
+
+-   Generating watershed information can be complicated for large watersheds when the desired metrics are needed at many sites across a large geographic extent
+-   For this reason we developed the [StreamCat](https://www.epa.gov/national-aquatic-resource-surveys/streamcat-dataset) and [LakeCat](https://www.epa.gov/national-aquatic-resource-surveys/lakecat-dataset) datasets
 
 ## StreamCat and LakeCat
 
 ::: columns
-
 ::: {.column width="20%"}
 ![](streamcattools-med-dpi.png)
 :::
 
 ::: {.column width="40%"}
-- StreamCat:
-  - Watershed summaries of several hundred metrics for local catchments and watersheds
-  - Uses NHDPlusV2 flowlines (~2.6 million stream segments)
-  
+-   StreamCat:
+    -   Watershed summaries of several hundred metrics for local catchments and watersheds
+    -   Uses NHDPlusV2 flowlines (\~2.6 million stream segments)
 :::
 
 ::: {.column width="40%"}
-- LakeCat 
-  - Watershed summaries of several hundred metrics lakes 
-  - Uses NHDPlusV2 waterbodies (for ~400,000 lakes)
-
+-   LakeCat
+    -   Watershed summaries of several hundred metrics lakes
+    -   Uses NHDPlusV2 waterbodies (for \~400,000 lakes)
 :::
-
 :::
 
 ## StreamCat and LakeCat
 
 ::: columns
-
 ::: {.column width="50%"}
 ![Geospatial framework of the StreamCat Dataset - from Hill et al. 2016](geospatialframework.png)
-
 :::
 
 ::: {.column width="50%"}
 ![Geospatial framework for LakeCat - from Hill et al. (2018)](offnetwork.png)
-
 :::
-
 :::
 
 ## Accessing StreamCat and LakeCat
 
-- Both datasets are now accessible via an API through:
-  - A simple [leafmap interface]() and [menu interface]()
-  - [StreamCatTools package](https://usepa.github.io/StreamCatTools/)
-  - [pynhd]() which is part of the [HyRiver suite of Python packages]() that provide a unified API for retrieving hydro-climatic geospatial/temporal data from various web services 
+-   Both datasets are now accessible via an API through:
+    -   A simple [leafmap interface](https://www.epa.gov/national-aquatic-resource-surveys/streamcat-web-tool-map-view) and [menu interface](https://www.epa.gov/national-aquatic-resource-surveys/streamcat-web-tool-table-view)
+    -   [StreamCatTools package](https://usepa.github.io/StreamCatTools/)
+    -   [pynhd]() which is part of the [HyRiver suite of Python packages]() that provide a unified API for retrieving hydro-climatic geospatial/temporal data from various web services
+-   [API Swagger Documentation](https://usepa.github.io/StreamCatWebServices_Public/)
 
 ## Accessing StreamCat and LakeCat
 
-- We'll explore accessing the data via these tools in the next few slides
-- Then we'll walk through the underlying code base and tools demonstrating workflows using open source and ESRI tools in Python and R
+-   We'll explore accessing the data via these tools in the next few slides
+-   Then we'll walk through the underlying code base and tools demonstrating workflows using open source and ESRI tools in Python and R
 
-## Context of CodeBase for StreamCat
+## StreamCatTools R package
 
-Quarto enables you to weave together content and executable code into a finished presentation. To learn more about Quarto presentations see <https://quarto.org/docs/presentations/>.
+-   Start with a lat and lon - in this case, imagine it's a sampling site at the mouth of the Calapooia River near Albany Oregon where it enters the Willamette River
 
-## First show example of HyRiver querying StreamCat data
+```{r}
+latitude <- 44.62892
+longitude <- -123.13113
+```
+
+## StreamCatTools R package
+
+-   Turn the coordinates into what is called an `sf` simple features dataframe in R
+
+```{r}
+#| output-location: slide
+library(sf)
+pt <- data.frame(site_name = 'Calapooia',
+                 longitude = longitude,
+                 latitude = latitude) |> 
+  st_as_sf(coords = c('longitude', 'latitude'), crs = 4269)
+pt
+```
+
+## StreamCatTools R package
+
+-   Get the unique ID (COMID) of the stream reach and local catchment for the site
+-   Pass to StreamCatTools `sc_get_data` function to grab data from API
+
+```{r}
+library(StreamCatTools)
+comid <- sc_get_comid(pt)
+
+sc_get_data(comid = comid,
+            metric = 'PctCrop2019', 
+            aoi = 'watershed')
+```
+
+## [pynhd](https://docs.hyriver.io/readme/pynhd.html) in the [HyRiver suite of Python packages](https://docs.hyriver.io/index.html)
+
+```{r, echo=FALSE, warning=FALSE}
+library(reticulate)
+
+use_condaenv("HyRiver", conda="C:/Users/mweber/AppData/Local/miniforge3/envs/HyRiver", required = TRUE)
+```
 
 ```{python}
 #|echo: true
 #| output-location: slide
-from pygeohydro import NWIS, WBD
+from pygeohydro import NWIS
 from pynhd import NLDI, streamcat
 
 nldi = NLDI()
@@ -81,33 +128,34 @@ upstream_network = nldi.navigate_byid(
     "comid", 23763517, "upstreamTributaries", "flowlines", distance=9999
 )
 m = upstream_network.plot()
-m
 ```
-## test
+
+## [pynhd](https://docs.hyriver.io/readme/pynhd.html) in the [HyRiver suite of Python packages](https://docs.hyriver.io/index.html)
+
 ```{python}
 m = upstream_network.explore()
 m
 ```
 
+## StreamCat and LakeCat Code to generate landscape metrics
 
-## Then show querying StreamCat using StreamCatTools
+![](PythonEnvironments.png){fig-align="center"}
 
-
-## Show how we set up environment in Python
-
-When you click the **Render** button a document will be generated that includes:
-
--   Content authored with markdown
--   Output from executable code
-
-## Code
-
-When you click the **Render** button a presentation will be generated that includes both content and the output of embedded code. You can embed code like this:
+## StreamCat and LakeCat Code to generate landscape metrics
 
 ```{python}
-#|echo: true
-1 + 1
+import numpy as np
+accum = np.load("E:/GitProjects/StreamCat/accum_npy/accum_17.npz")
+comids = accum["comids"]
+lengths = accum["lengths"]
+upstream = accum["upstream"]
+
+itemindex = np.where(comids == 23763517)[0].item()
+n = lengths[:itemindex].sum()
+arrlen = lengths[itemindex]
+up_coms = upstream[n : n + arrlen]
 ```
 
 ## Brian Chastain link comparing `geopandas` and `spatially-enabled dataframes`
+
 [Comparing Python Geospatial Frameworks](https://github.com/bchastain/devsummit2023/blob/main/geodataframes.ipynb)
