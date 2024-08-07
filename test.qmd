@@ -318,7 +318,7 @@ up_coms = upstream[n : n + arrlen]
 
 ## Accessing in ArcGIS Online
 
-- [Notebook Example](https://epa.maps.arcgis.com/home/notebook/notebook.html?id=767d3aba3c734d0e87eaf6649b2c09bd#)
+- [Notebook Example](https://epa.maps.arcgis.com/home/notebook/notebook.html?id=539543d6f6334147a1cea02e515f5bea#)
 - [Data Pipeline Example](https://epa.maps.arcgis.com/home/item.html?id=e5d506b10d13471588b7873d921f40cb)
 - [Data Pipeline Output](https://epa.maps.arcgis.com/home/item.html?id=e5d506b10d13471588b7873d921f40cb)
 
