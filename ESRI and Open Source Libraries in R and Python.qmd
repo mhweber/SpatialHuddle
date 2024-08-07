@@ -114,7 +114,7 @@ sc_get_data(comid = comid,
 ```{r, echo=FALSE, warning=FALSE}
 library(reticulate)
 
-use_condaenv("HyRiver", conda="C:/Users/mweber/AppData/Local/miniforge3/envs/HyRiver", required = TRUE)
+use_condaenv("hyriver", conda="C:/Users/mweber/.conda/envs/hyriver", required = TRUE)
 ```
 
 ```{python}
