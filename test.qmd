@@ -1,0 +1,325 @@
+---
+title: "Blending open-source libraries in Python and R with ESRI tools"
+author: 
+  - name: Marc Weber
+  - name: Ryan Hill
+  - name: Allen Brookes
+  - name: Travis Hudson
+format: 
+  revealjs:
+    self-contained: true
+
+editor: visual
+execute: 
+  eval: true
+  error: false
+  echo: true
+  warning: false
+  include: true
+  progress: true
+---
+
+
+## Outline
+
+-   Review watershed information via an API with [StreamCat](https://www.epa.gov/national-aquatic-resource-surveys/streamcat-dataset) and [LakeCat](https://www.epa.gov/national-aquatic-resource-surveys/lakecat-dataset)
+-   Demonstrate StreamCat access in Python and R
+-   Give an overview of the Python codebase for StreamCat and LakeCat
+-   Explore more broadly the theme of integrating open source Python libraries, R and ESRI suite of tools in the context of StreamCat and LakeCat
+
+## Watershed information in an API
+
+-   Generating watershed information can be complicated for large watersheds when the desired metrics are needed at many sites across a large geographic extent
+-   For this reason we developed the [StreamCat](https://www.epa.gov/national-aquatic-resource-surveys/streamcat-dataset) and [LakeCat](https://www.epa.gov/national-aquatic-resource-surveys/lakecat-dataset) datasets
+
+## StreamCat and LakeCat
+
+::: columns
+::: {.column width="20%"}
+![](streamcattools-med-dpi.png)
+:::
+
+::: {.column width="40%"}
+-   StreamCat:
+    -   Watershed summaries of several hundred metrics for local catchments and watersheds
+    -   Uses NHDPlusV2 flowlines (\~2.6 million stream segments)
+:::
+
+::: {.column width="40%"}
+-   LakeCat
+    -   Watershed summaries of several hundred metrics lakes
+    -   Uses NHDPlusV2 waterbodies (for \~400,000 lakes)
+:::
+:::
+
+## StreamCat and LakeCat
+
+::: columns
+::: {.column width="50%"}
+![Geospatial framework of the StreamCat Dataset - from Hill et al. 2016](geospatialframework.png)
+:::
+
+::: {.column width="50%"}
+![Geospatial framework for LakeCat - from Hill et al. (2018)](offnetwork.png)
+:::
+:::
+
+## Accessing StreamCat and LakeCat
+
+-   Both datasets are now accessible via an API through:
+    -   A simple [leafmap interface](https://www.epa.gov/national-aquatic-resource-surveys/streamcat-web-tool-map-view) and [menu interface](https://www.epa.gov/national-aquatic-resource-surveys/streamcat-web-tool-table-view)
+    -   [StreamCatTools package](https://usepa.github.io/StreamCatTools/)
+    -   [pynhd]() which is part of the [HyRiver suite of Python packages]() that provide a unified API for retrieving hydro-climatic geospatial/temporal data from various web services
+-   [API Swagger Documentation](https://usepa.github.io/StreamCatWebServices_Public/)
+- Snapshot of `StreamCat` also available in the [WATERS GeoViewer](https://www.epa.gov/waterdata/waters-geoviewer)
+
+## Accessing StreamCat and LakeCat
+
+-   We'll explore accessing the data via these tools in the next few slides
+-   Then we'll walk through the underlying code base for StreamCat and LakeCat
+-   We'll demonstrate integration of open source workflows with ESRI tools as we go
+
+## Using [pynhd](https://docs.hyriver.io/readme/pynhd.html) in the [HyRiver suite of Python packages](https://docs.hyriver.io/index.html)
+
+-   We can use the [Hydro Network-Linked Data Index (NLDI)](https://waterdata.usgs.gov/blog/nldi-intro/) web service called in the `pynhd` Python package to navigate NHDPlus from a given feature of interest and plot results
+
+```{python}
+#| output-location: slide
+from pynhd import NLDI, streamcat
+nldi = NLDI()
+upstream_network = nldi.navigate_byid(
+    "comid", 23763517, "upstreamTributaries", "flowlines", distance=9999
+)
+m = upstream_network.plot()
+```
+
+## We can also plot interactively in Python in a `leaflet` map using [pynhd](https://docs.hyriver.io/readme/pynhd.html)
+
+-   We can also plot interactively in Python in a `leaflet` map
+
+```{python}
+#| output-location: slide
+m = upstream_network.explore()
+m
+```
+
+## Pulling in `StreamCat` data using [pynhd](https://docs.hyriver.io/readme/pynhd.html)
+
+-   Using `pynhd` we can pull catchment, watershed or riparian area buffer metrics directly from the `StreamCat` API
+
+```{python}
+import pynhd
+fert_ws = pynhd.streamcat("fert", comids=upstream_network['nhdplus_comid']) 
+fert_ws.head()
+```
+
+## StreamCatTools R package
+
+-   Start with a lat and lon - in this case, imagine it's a sampling site at the mouth of the Calapooia River near Albany Oregon where it enters the Willamette River
+
+```{r}
+latitude <- 44.62892
+longitude <- -123.13113
+```
+
+## StreamCatTools R package
+
+-   Turn the coordinates into what is called an `sf` simple features dataframe in R
+
+```{r}
+#| output-location: slide
+library(sf)
+pt <- data.frame(site_name = 'Calapooia',
+                 longitude = longitude,
+                 latitude = latitude) |> 
+  st_as_sf(coords = c('longitude', 'latitude'), crs = 4269)
+pt
+```
+
+## StreamCatTools R package
+
+-   Get the unique ID (COMID) of the stream reach and local catchment for the site
+-   Pass to StreamCatTools `sc_get_data` function to grab data from API
+
+```{r}
+library(StreamCatTools)
+comid <- sc_get_comid(pt)
+```
+
+## StreamCatTools R package
+
+-   Get `StreamCat` data for both the focal catchment and the watershed
+
+```{r}
+#| output-location: slide
+dat <- sc_get_data(comid = comid,
+            metric = 'PctCrop2019', 
+            aoi = 'catchment,watershed')
+head(dat)
+```
+
+## StreamCatTools R package
+
+-   Difference between focal catchment and upstream catchments / cumulative watershed for COMID of interest
+
+```{r, warning=F, message=F, echo=FALSE}
+trib_pt2 <- st_sfc(st_point(c(longitude, latitude)), crs = 4269)
+start_comid <- nhdplusTools::discover_nhdplus_id(trib_pt2)
+ws_source <- list(featureSource = "comid", featureID = start_comid)
+
+trib_ws2 <- nhdplusTools::get_nldi_basin(nldi_feature = ws_source)
+
+streams <- nhdplusTools::navigate_nldi(ws_source, mode = "UT", 
+                                       distance_km = 2000) %>%
+  purrr::pluck('UT_flowlines')
+
+# Use get_nhdplus to access the individual stream sub-catchments
+all_catchments <- nhdplusTools::get_nhdplus(comid = streams$nhdplus_comid,
+                                            realization = 'catchment')
+
+focal_cat <- nhdplusTools::get_nhdplus(comid = start_comid,
+                                       realization = 'catchment')
+
+mapview::mapview(streams, color='blue', legend = FALSE) +
+  mapview::mapview(focal_cat, alpha.regions=.08, col.regions = 'red') +
+  mapview::mapview(all_catchments, alpha.regions=.08, col.regions = 'yellow') 
+```
+
+## StreamCatTools R package
+
+-   Map NLCD crops and fertilizer use from `StreamCat` for all catchments
+
+```{r, warning=F, message=F}
+#| output-location: slide
+# Use get_nhdplus to access the individual stream reaches
+flowlines <- nhdplusTools::get_nhdplus(comid = streams$nhdplus_comid,
+                                            realization = 'flowline')
+basin <- nhdplusTools::get_nldi_basin(nldi_feature = ws_source)
+comids <- paste(as.integer(flowlines$comid), collapse=",",sep="")
+df <- sc_get_data(metric='PctCrop2019, fert', aoi='catchment', comid=comids)
+flowlines$PCTCROP2019 <- df$PCTCROP2019CAT[match(flowlines$comid, df$COMID)]
+flowlines$FERT <- df$FERTCAT[match(flowlines$comid, df$COMID)]
+
+mapview::mapviewOptions(fgb=FALSE)
+m1 <- mapview::mapview(basin, alpha.regions=.08) + mapview::mapview(flowlines, zcol = "PCTCROP2019", legend = TRUE)
+m2 <- mapview::mapview(basin, alpha.regions=.08) + mapview::mapview(flowlines, zcol = "FERT", legend = TRUE)
+leafsync::sync(m1, m2)
+```
+
+## Regional data for StreamCat
+
+-   We can pull in data for whole counties, states, or hydro-regions in `StreamCat`
+-   `StreamCatTools` uses FIPS codes for counties - we can look up FIPS codes using `tidycensus` in R
+
+```{r}
+#| output-location: slide
+library(tidycensus); library(ggplot2)
+data(fips_codes)
+state <- fips_codes$state_code[fips_codes$state=='OR' & fips_codes$county == 'Linn County']
+county <- fips_codes$county_code[fips_codes$state=='OR' & fips_codes$county == 'Linn County']
+county_crop <- sc_get_data(county = paste0(state, county),
+                         metric = 'PctCrop2019', 
+                         aoi = 'watershed')
+
+ggplot() + 
+  geom_histogram(data = county_crop,
+                 aes(x = PCTCROP2019WS)) + 
+  theme_bw()
+```
+
+## StreamCat code to generate landscape metrics
+
+![](PythonEnvironments.png){fig-align="center"}
+
+## StreamCat and LakeCat Code to generate landscape metrics
+
+-   We clone the ArcPro conda environment and set up a `StreamCat` Python environment
+-   We add additional needed libraries (right now just `geopandas` and `rasterio`) for data manipulation ![](conda.png){height="300px" width="1500px" fig-align="center"}
+
+## StreamCat Code to generate landscape metrics
+
+::: columns
+:::  {.column width="50%"}
+-   `StreamCat` uses `arcpy.ZonalStatisticsAsTable` and `arcpy.TabulateArea` to calculate zonal statistics of hundreds of CONUS scale rasters for each NHDPlus catchment
+:::
+
+:::  {.column width="50%"}
+![](Layers.png){height="400px" width="350px" fig-align="right"}
+:::
+:::
+
+## StreamCat Code to generate landscape metrics
+
+-   `Geopandas` library used extensively for data manipulation
+-   See nice synopsis of `Geopandas` versus ESRI `Spatially-enabled dataframes` by Bryan Chastain here - [Comparing Python Geospatial Frameworks](https://github.com/bchastain/devsummit2023/blob/main/geodataframes.ipynb)
+
+## StreamCat and LakeCat Code to generate landscape metrics
+
+::: columns
+::: {.column width="50%"}
+-   'FromTo' table in NHDPlus allows network topology
+-   We ingest this table into `deque` - a  performant data structure in the Python `collections` module
+:::
+
+::: {.column width="50%"}
+![](Topology.png){height="300px" width="700px" fig-align="center"}
+:::
+:::
+
+## StreamCat Code to generate landscape metrics
+
+::: columns
+::: {.column width="50%"}
+-   We create 3 numpy arrays of
+    -   COMIDS
+    -   length of upstream catchments for each COMID
+    -   the set of upstream catchments for each COMID
+:::
+
+::: {.column width="50%"}
+![](numpy_arrays.png){height="300px" width="700px" fig-align="center"}
+:::
+:::
+
+## StreamCat Code to generate landscape metrics
+
+-   Zip and store arrays to use each time we accumulate metrics
+
+```{python}
+import numpy as np
+accum = np.load("E:/GitProjects/StreamCat/accum_npy/accum_17.npz")
+comids = accum["comids"]
+lengths = accum["lengths"]
+upstream = accum["upstream"]
+
+itemindex = np.where(comids == 23763517)[0].item()
+n = lengths[:itemindex].sum()
+arrlen = lengths[itemindex]
+up_coms = upstream[n : n + arrlen]
+'The number of upstream reaches is: ' + str(n)
+'The first few COMIDs upstream are: ' + str(upstream[0:5])
+```
+
+## LakeCat Code to generate landscape metrics
+
+![](LakeCat1.png)
+
+## LakeCat Code to generate landscape metrics
+
+::: columns
+::: {.column width="50%"}
+![](LakeCat2.png)
+:::
+
+::: {.column width="50%"}
+![](LakeCat3.png)
+:::
+:::
+
+## Accessing in ArcGIS Online
+
+- [Notebook Example](https://epa.maps.arcgis.com/home/notebook/notebook.html?id=767d3aba3c734d0e87eaf6649b2c09bd#)
+- [Data Pipeline Example](https://epa.maps.arcgis.com/home/item.html?id=e5d506b10d13471588b7873d921f40cb)
+- [Data Pipeline Output](https://epa.maps.arcgis.com/home/item.html?id=e5d506b10d13471588b7873d921f40cb)
+
+## Questions?
