@@ -1,0 +1,78 @@
+---
+title: "Metadata"
+author: "Marc Weber"
+format: 
+  revealjs:
+    self-contained: true
+embed-resources: true
+editor: visual
+---
+
+## Agenda 8/21/24
+
+-   Quick intros for anyone new
+
+-   [Where to suggest topics and see what we've covered](https://teams.microsoft.com/l/entity/0d820ecd-def2-4297-adad-78056cde7c78/_djb2_msteams_prefix_598208146?context=%7B%22channelId%22%3A%2219%3A50c2782cfb5041afacdc66f8fec51f93%40thread.skype%22%7D&tenantId=88b378b3-6748-4867-acf9-76aacbeca6a7)
+
+-   EPA Metadata
+
+## Metadata Background
+
+-   EPA Metadata tools
+
+    -   [EPA Metadata Technical Specification](https://www.epa.gov/geospatial/epa-metadata-technical-specification)
+
+    -   [EPA Metadata Editor Pro](https://github.com/USEPA/EPA-Metadata-Editor-Pro)
+
+    -   [EPA Open Data Metadata Editor](https://edg.epa.gov/epa-open-data-metadata-editor/)
+
+## EPA Metadata Editor Pro
+
+-   [Install as an Add-in for ArcPro](https://github.com/USEPA/EPA-Metadata-Editor-Pro/wiki/EME-Pro-Installation-Guide)
+-   [Follow the 'How-to' on the GitHub wiki page for the Metadata Editor](https://github.com/USEPA/EPA-Metadata-Editor-Pro/wiki/Getting-Started-with-EME-Pro)
+-   Also [links to Training Slides on wiki page](https://edg.epa.gov/data/public/OEI/EMEPROFILES/EMEProTraining.pdf)
+
+## EPA Metadata Editor Pro
+
+-   Need to set as the default metadata editor in options
+
+![](ProSettingsMetada.png)
+
+## EPA Metadata Editor Pro
+
+-   First steps are often running 'EPA Upgrade FGDC to ArcGIS', setting a metadata template file, and running 'Merge'
+
+![](EME%20Tools%20Ribbon.png)
+
+## EPA Metadata Editor Pro
+
+-   Editing individual items looks like this - elements in metadata that are passing are green, those that need correcting have a red x
+
+![](EME%20Example%20Record.png)
+
+## EPA Metadata Editor Pro
+
+-   This is where you can use or set up a template that will merge in template records for many elements at once using boilerplate language to make fast work of things
+
+![](EME%20Tools%20Ribbon2.png)
+
+## Detailed Metadata Style Guides and Instructions
+
+-   [EPA Geospatial Metadata Style Guide](https://www.epa.gov/geospatial/epa-geospatial-metadata-style-guide-using-eme-5-and-eme-pro#spatial-data-representation)
+-   [EPA Metadata Style Guide for Geospatial and Non Geospatial Data](https://www.epa.gov/geospatial/epa-metadata-style-guide-geospatial-and-non-geospatial-data)
+
+## EPA Open Metadata Editor
+
+-   For Non Geospatial Metadata (which is how we treat StreamCat and LakeCat) we can use the EPA Open Metadata Editor
+
+![](OpenMetadataEditor.png)
+
+## EPA Open Metadata Editor
+
+- The Open Metadata Editor stores and ingests metadata as json
+- We have a Python script that ingests a couple input fields from a spreadsheet that are specific to a dataset, applies boilerplate language for other elements and writes out json file(s) to load in the tool
+
+## EPA Open Metadata Editor
+- Records loaded into Open Metadata Editor are then harvested to Data.gov
+
+![](data_gov_example.png)

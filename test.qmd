@@ -22,7 +22,7 @@ execute:
 
 ## Outline
 
--   Review watershed information via an API with [StreamCat](https://www.epa.gov/national-aquatic-resource-surveys/streamcat-dataset) and [LakeCat](https://www.epa.gov/national-aquatic-resource-surveys/lakecat-dataset)
+-   Show how to access watershed information via an API with [StreamCat](https://www.epa.gov/national-aquatic-resource-surveys/streamcat-dataset) and [LakeCat](https://www.epa.gov/national-aquatic-resource-surveys/lakecat-dataset)
 -   Demonstrate StreamCat access in Python and R
 -   Give an overview of the Python codebase for StreamCat and LakeCat
 -   Explore more broadly the theme of integrating open source Python libraries, R and ESRI suite of tools in the context of StreamCat and LakeCat
