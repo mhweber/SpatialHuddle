@@ -1,0 +1,314 @@
+---
+title: "The R ArcGIS Bridge"
+author: "Marc Weber"
+date: "2024-12-11"
+output:
+  slidy_presentation: default
+---
+
+## What is the R-ArcGIS Bridge?
+
+The [R ArcGIS Bridge](https://www.esri.com/en-us/arcgis/products/r-arcgis-bridge/overview) at it's fundamental level is implemented with the `arcgisbinding` package which:
+
+-   Uses R from ArcGIS Pro
+
+-   Loads data and tools from ArcPro in your R project
+
+-   [Getting Started](https://www.esri.com/en-us/arcgis/products/r-arcgis-bridge/get-started)
+
+
+## Setting up the R ArcGIS Bridge
+
+![](ArcPro_setup_arcgisbinding.png){width=75%}
+
+## The R - ESRI Ecosystem
+
+We'll talk about more, but `arcgisbinding` is now couched [within a collection of packages for integrating R and the ArcGIS ecosystem](https://developers.arcgis.com/r-bridge/)
+
+![](r-bridge.png){width=75%}
+
+## Check installation from R
+
+First we'll explore the `arcgisbinding` package. We'll check the installation we did from ArcPro in R:
+
+```{r}
+library(arcgisbinding)
+arc.check_product()
+```
+
+## Using the R-ArcGIS Bridge
+I'll demonstrate the basic functions of the `arcgisbinding` package following along with the [arcgisbinding vignette](https://r.esri.com/assets/arcgisbinding-vignette.html) for starters.
+
+The main function of the R-ArcGIS Bridge is to move data from ArcPro to R and vice versa. The primary functions in R include:
+
+-   `arc.open()`
+-   `arc.select()`
+-   `arc.shapeinfo()`
+
+Among others
+
+## Test it with sample data
+
+```{r}
+ozone.path <- system.file("extdata", "ca_ozone_pts.shp",                package="arcgisbinding")
+ozone.arc.dataset <- arc.open(ozone.path)
+```
+
+## The `arc.dataset` object
+What we get back from `arc.open` in R is an `arc.dataset` object which will bring us all back to the good old `sp` days - an s4 object (shudder..)
+```{r}
+ozone.arc.dataset@shapeinfo
+```
+
+You can get details of your geometry with `arc.shape` or `arc.shapeinfo` 
+
+```{r}
+ozone.shapeinfo <- arc.shapeinfo(ozone.arc.dataset)
+ozone.shapeinfo$WKT
+```
+
+## Selects and filters using SQL syntax
+We can fiter rows and select columns to read in from a spatial data layer using the `arc.select` function
+```{r}
+ozone.dataframe <- arc.select(object = ozone.arc.dataset, fields = c("FID", "Shape", "LATITUDE", "LONGITUDE", "ELEVATION", "OZONE"), where_clause = "ELEVATION >= 1000")
+head(ozone.dataframe)
+```
+
+## Conversion
+Easy to convert to `sf` object
+```{r}
+library(sf)
+sf_data <- arc.data2sf(ozone.dataframe)
+sf_data
+```
+
+![](ozone.png){width=75%}
+
+## Writing data
+
+```{r}
+arc.write('C:/Users/mweber/GitProjects/SpatialHuddle/test.gdb/ozone', sf_data, overwrite = TRUE)
+```
+
+## Creating tool in ArcPro working with rasters
+We can wrap arcgisbinding and R functionality into a geoprocessing script and call as a tool in ArcPro as described [here](https://developers.arcgis.com/r-bridge/geoprocessing/creating-gp-tools/)
+
+```{r, eval=FALSE}
+tool_exec <- function(in_params, out_params) { # <1>
+  # ... do things here.. 
+  out_params #<2>
+}
+```
+
+![](ScriptTool.png){width=75%}
+
+## Working with rasters
+We can aslo work with raster data in our ArcPro projects in R - reading in as a 
+```{r}
+data.path <- arc.open('C:/Users/mweber/GitProjects/PlanetaryComputer/LC09_L2SP_218072_20230914_20230916_02_T1_SR_B2.TIF')
+sat.dat <- arc.raster(data.path)
+sat.dat
+```
+## Working with rasters
+```{r}
+class(sat.dat)
+```
+
+## Working with rasters
+```{r}
+rsat <- as.raster(sat.dat)
+class(rsat)
+```
+
+## Beyond `arcgisbinding` library
+Remember the R-ArcGIS Bridge is **a collection of R packages** designed to integrate the R language with the ArcGIS Ecosystem. The R-ArcGIS Bridge can be used to:
+
+- Create R-based geoprocessing tools
+- Access and publish data on ArcGIS Online, Enterprise, or Platform
+- Geocode addresses at scale
+- Access detailed point of interest (POI) data
+
+## Beyond `arcgisbinding` library
+
+-`arcgisutils`: manages authorization for all location service R packages and other utilities
+-`arcgislayers`: provides read and write access to layers on ArcGIS Online, Enterprise, and Platform
+-`arcgisgeocode`: geocode addresses and reverse geocode point data
+-`arcgisplaces`: access point-of-interest data from the ArcGIS Places Service
+
+## Beyond `arcgisbinding` library
+As described [here](https://developers.arcgis.com/r-bridge/installation/) to install the `arcgis` metapackage (which includes the other four R-ArcGIS bridge packages besides `arcgisbinding`) the steps are the same as installing any other R packages:
+```{r, eval=FALSE}
+install.packages("arcgis", repos = c("https://r-arcgis.r-universe.dev", "https://cloud.r-project.org"))
+library(arcgis)
+```
+
+Or individually:
+```{r, eval=FALSE}
+pkgs <- c("arcgisutils", "arcgislayers", "arcgisgeocode", "arcgisplaces")
+
+install.packages(pkgs, repos = c("https://r-arcgis.r-universe.dev", "https://cloud.r-project.org"))
+```
+
+## `arcgislayers`
+
+- Example here is from the [GitHub repo for arcgislayers](https://github.com/R-ArcGIS/arcgislayers) and follows [material I presented to R user group on web services in R](https://github.com/mhweber/SpatialHuddle/blob/master/WebServices.qmd)
+- This example reads in the ESRI Rest service for the same waterbody features as the previous example
+```{r}
+library(arcgis, quietly = TRUE)
+url <- "https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_Water_Bodies/FeatureServer/0"
+wb <- arcgislayers::arc_open(url)
+```
+
+## `arcgislayers`
+
+- By using `list_fields` we can find out more about the service and what attributes we can query (rather than reading in the whole layer)
+```{r}
+list_fields(wb)
+```
+
+## `arcgislayers`
+We can spatially subset this REST service to Oregon using `arc_select` in `arcgislayers` 
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| smaller: true
+
+OR_wb <- arcgislayers::arc_select(wb, fields = c("FEATURE", "NAME", "STATE"), 
+  where = "STATE = 'OR'")
+head(OR_wb)
+```
+## `arcgislayers`
+
+-   We can also use `sf` features to use as a spatial query template for pulling in ESRI REST service layers
+-   Here we pass a similar `arc_select` query as last time but apply a spatial filter on waterbodies to filter to just those in Oregon
+-   We get the state boundary using the `AOI` package
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| output-location: slide
+OR <- AOI::aoi_get(state='OR')
+OR_wb <- arcgislayers::arc_select(
+  wb,
+  filter_geom = sf::st_bbox(OR)
+)
+mapview::mapview(OR_wb, col.regions='light blue',map.types = "OpenStreetMap")
+```
+
+## `arcgislayers`
+
+-   Try ECHO ESRI service <https://echogeo.epa.gov/arcgis/rest/services/ECHO/Facilities/MapServer>
+-   Note that we need to drill down to a particular numbered feature layer in code below to grab particular features
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+url <- "https://echogeo.epa.gov/arcgis/rest/services/ECHO/Facilities/MapServer/3"
+
+rcra <- arcgislayers::arc_open(url)
+rcra
+```
+
+## `arcgislayers`
+
+-   Again we use `list_fields` to figure out field query options
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+arcgislayers::list_fields(rcra)
+```
+
+## `arcgislayers`
+
+-   Use a fields based query
+-   Use `mapview` to display the result of our query
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| output-location: slide
+rcra_pdx <- arcgislayers::arc_select(
+  rcra, 
+  fields = c("GLOBALID", "RCR_NAME", "RCR_CITY","RCR_STATE","RCR_ZIP","RCRA_CURR_COMPL_STATUS","DFR_URL"), 
+  where = "RCR_ZIP = '97209'"
+)
+mapview::mapview(rcra_pdx)
+```
+
+## `arcgislayers`
+
+-   Here we use the `AOI` package for convenience georeferencing to get the spatial boundary of Benton County in Oregon to use as a spatial filter
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| output-location: slide
+Benton <- AOI::aoi_get(state = "OR", county= "Benton")
+rcra_benton <- arcgislayers::arc_select(
+  rcra,
+  fields = c("GLOBALID", "RCR_NAME", "RCR_CITY","RCR_STATE","RCR_ZIP","RCRA_CURR_COMPL_STATUS","DFR_URL"),
+  filter_geom = sf::st_bbox(Benton))
+mapview::mapview(rcra_benton)
+```
+
+## `arcgislayers`
+
+-   Here we again use `arc_open` to read in one of the many layers available as EJSCREEN REST layers
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+url <- "https://ejscreen.epa.gov/ArcGIS/rest/services/ejscreen/socioeconomic_indicators_2023_public/MapServer/4"
+
+unemployment <- arcgislayers::arc_open(url)
+unemployment
+```
+
+## `arcgislayers`
+
+Again we can use `list_fields` to figure out field query options
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+list_fields(unemployment)
+```
+
+## `arcgislayers`
+
+-   Use `AOI` to get a county spatial boundary for a filter (this time Multnomah county around Portland, Oregon)
+-   Pass that spatial filter to `arc_select` for an EJSCREEN socioeconomic indicators layer
+
+```{r}
+#| warning: false
+#| message: false
+#| error: false
+#| output-location: slide
+Multnomah <- AOI::aoi_get(state = "OR", county= "Multnomah")
+unemployment_multnomah <- arcgislayers::arc_select(
+  unemployment,
+  filter_geom = sf::st_bbox(Multnomah))
+mapview::mapview(unemployment_multnomah, zcol = "T_UNEMPPCT")
+```
+
+## `arcgisgeocode`
+[arcgisgeocode](https://github.com/R-ArcGIS/arcgisgeocode) provides access to ArcGIS geocoding services from R. We can reverse geocode as well as look up addresses - note there is also ability to batch geocode but it requires autentication and uses ESRI credits
+
+```{r}
+library(arcgisgeocode)
+
+# Find addresses from locations
+rev_loc <- reverse_geocode(c(-123.291, 44.565))
+rev_loc$address
+```
+
