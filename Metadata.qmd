@@ -1,5 +1,5 @@
 ---
-title: "Metadata"
+title: "EPA Geospatial Metadata"
 author: "Marc Weber"
 format: 
   revealjs:
@@ -25,6 +25,15 @@ editor: visual
     -   [EPA Metadata Editor Pro](https://github.com/USEPA/EPA-Metadata-Editor-Pro)
 
     -   [EPA Open Data Metadata Editor](https://edg.epa.gov/epa-open-data-metadata-editor/)
+
+## Big Picture
+
+- Standards and FAIR principles
+- What is [FAIR](https://www.go-fair.org/fair-principles/)?
+- Why Standards?
+  - [ISO](https://www.fgdc.gov/metadata/iso-standards)
+  - [OGC](https://www.ogc.org/standards/)
+- How does metadata fit in?
 
 ## EPA Metadata Editor Pro
 

@@ -103,7 +103,7 @@ system.time({
 ```{r}
 library(reticulate)
 
-use_condaenv("geo", conda="C:/Users/mweber/AppData/Local/miniforge3/envs/geo", required = TRUE)
+use_condaenv("geo", conda="C:/Users/mweber/.conda/envs/geo", required = TRUE)
 ```
 
 ## And more
