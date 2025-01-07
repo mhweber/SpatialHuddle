@@ -1,0 +1,115 @@
+---
+title: "Parallel versus Python"
+author: "Marc Weber"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+format: 
+  html:
+    toc: true
+    toc-depth: 4
+    toc-location: left
+    self-contained: true
+    code-link: true
+    code-fold: true
+editor: visual
+---
+
+## Background
+
+This is the code document for assembling landscape metrics for sampled lakes for NLA22 using as input the list of landscape metrics in the excel file 'NLA22 Landscape Metrics Data Dictionary Preliminary.xlsx'
+
+## Setup
+
+```{r message=FALSE, error=FALSE, warning=FALSE}
+library(dplyr)
+library(sf)
+library(readr)
+library(terra)
+library(parallel)
+library(zonal)
+library(tictoc) 
+library(reticulate)
+# use_condaenv("geo") # I use a conda environment installation of python
+sessionInfo()
+```
+
+## Function for parallel zonal
+
+```{r}
+#|warning: false
+#|message: false
+get_zonal <- function(zones,data_loc,rast_name) {
+  lrast <- terra::rast(paste0(data_loc,rast_name))
+  zonal::execute_zonal(lrast, zones, ID='SITE_ID',fun = "mean")
+}
+```
+
+## Parallelize in R
+
+```{r}
+#|warning: false
+#|message: false
+zones <- read_sf('E:/GitProjects/NARS/NARS/LandscapeMetrics/NWCA/NWCA21/Wetbufs.shp')
+zones <- st_transform(zones, 5070)
+rast_name <- 'Agkffact.tif'
+zone_list <- split(zones, seq(nrow(zones)))
+data_loc <- 'O:/PRIV/CPHEA/PESD/COR/CORFILES/Geospatial_Library_Projects/StreamCat/LandscapeRasters/QAComplete/'
+
+n_clusters <- 36 # using 36 of 48 clusters
+cluster <- makeCluster(n_clusters)
+# export stuff to cluster nodes if used in the function
+clusterEvalQ(cluster, {
+  library(sf)
+  library(terra)
+  library(zonal)
+})
+tic()
+zonal_results <- parLapply(cluster, zone_list, get_zonal, data_loc, rast_name)
+# stop cluster
+stopCluster(cluster)
+toc()
+
+# bind together
+final <- zonal_results %>%
+  dplyr::bind_rows()
+final <- final |> 
+  # dplyr::rename(AGKFFACT=Agkffact) |> 
+  dplyr::mutate(AGKFFACT=mean.Agkffact*0.01) # unit conversion of raster
+```
+
+## Process in Python
+
+```{python}
+#|warning: false
+#|message: false
+import pandas as pd
+import numpy as np
+import geopandas as gp
+import rasterio
+from rasterstats import zonal_stats
+import time
+
+raster_path='O:/PRIV/CPHEA/PESD/COR/CORFILES/Geospatial_Library_Projects/StreamCat/LandscapeRasters/QAComplete/'
+zones = 'E:/GitProjects/NARS/NARS/LandscapeMetrics/NWCA/NWCA21/Wetbufs.shp'
+
+lrast = raster_path + 'Agkffact.tif'
+
+start_time = time.time()
+
+zone_stats = zonal_stats(zones, lrast, all_touched=True,geojson_out=True, stats="count mean sum nodata")
+
+end_time = time.time()
+elapsed_time = end_time - start_time
+print(f"Elapsed time: {elapsed_time} seconds")
+
+zonal = pd.DataFrame(gp.GeoDataFrame.from_features(zone_stats).drop(columns='geometry'))
+```
+
+```{r}
+#| eval: false
+#|warning: false
+#|message: false
+zonal <- py$zonal
+head(as.data.frame(zonal))
+
+sites$AGKFFACT <- zonal$mean[match(sites$SITE_ID, zonal$SITE_ID)]*0.01 # unit conversion of raster
+```

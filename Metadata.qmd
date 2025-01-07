@@ -69,10 +69,11 @@ editor: visual
 
 ## EPA Open Metadata Editor
 
-- The Open Metadata Editor stores and ingests metadata as json
-- We have a Python script that ingests a couple input fields from a spreadsheet that are specific to a dataset, applies boilerplate language for other elements and writes out json file(s) to load in the tool
+-   The Open Metadata Editor stores and ingests metadata as json
+-   We have a Python script that ingests a couple input fields from a spreadsheet that are specific to a dataset, applies boilerplate language for other elements and writes out json file(s) to load in the tool
 
 ## EPA Open Metadata Editor
-- Records loaded into Open Metadata Editor are then harvested to Data.gov
+
+-   Records loaded into Open Metadata Editor are then harvested to Data.gov
 
 ![](data_gov_example.png)
