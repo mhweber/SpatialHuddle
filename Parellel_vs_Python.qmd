@@ -43,16 +43,27 @@ get_zonal <- function(zones,data_loc,rast_name) {
 }
 ```
 
-## Parallelize in R
-
+## Normally in R
 ```{r}
 #|warning: false
 #|message: false
 zones <- read_sf('E:/GitProjects/NARS/NARS/LandscapeMetrics/NWCA/NWCA21/Wetbufs.shp')
+data_loc <- 'O:/PRIV/CPHEA/PESD/COR/CORFILES/Geospatial_Library_Projects/StreamCat/LandscapeRasters/QAComplete/'
+lrast <- terra::rast(paste0(data_loc,'Agkffact.tif'))
+tic()
+result <- execute_zonal(lrast, zones, ID='SITE_ID',fun = "mean")
+toc()
+result <- result |> 
+  dplyr::rename(AGKFFACT=mean.Agkffact)
+```
+
+## Parallelize in R
+```{r}
+#|warning: false
+#|message: false
 zones <- st_transform(zones, 5070)
 rast_name <- 'Agkffact.tif'
 zone_list <- split(zones, seq(nrow(zones)))
-data_loc <- 'O:/PRIV/CPHEA/PESD/COR/CORFILES/Geospatial_Library_Projects/StreamCat/LandscapeRasters/QAComplete/'
 
 n_clusters <- 36 # using 36 of 48 clusters
 cluster <- makeCluster(n_clusters)
