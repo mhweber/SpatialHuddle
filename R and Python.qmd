@@ -1,0 +1,65 @@
+---
+title: "R and Python"
+author: "Marc Weber"
+format: 
+  revealjs:
+    embed-resources: true
+---
+
+## Blending R and Python
+
+The [retiuclate]() package provides a comprehensive interface to blend workflows in R and Python.  With `reticulate` you can:
+
+- Call Python from R by:
+  - sourcing Python scripts
+  - importing Python modules
+  - use Python interactively within an R session
+
+- Translate between R and Python objects (i.e. dataframes, arrays)
+
+- Provide flexible bindings to different versions of Python and different virtual or conda Python environments
+
+## Call Python in R
+We have several options:
+
+- The Python engine for R Markdown / Quarto - R chunks can access Python chunks and vice-versa for bi-directional communication / sharing of objects
+- Sourcing a Python script - Python objects and functions in script become available in your R session
+- Python REPL - run an interactive Python console from within R
+
+## How to use
+
+First thing is to configure the Python environment we want to use - an example with conda:
+
+```{r}
+#| label: set-environment
+#| echo: true
+#| message: false
+library(reticulate)
+# options(reticulate.conda_binary = "C:/Users/mweber/.conda")
+
+use_condaenv(condaenv = "C:/Users/mweber/.conda/envs/geo", required = TRUE)
+```
+
+## Python in R Markdown
+We can run a Python chunk and access results in an R chunk
+```{python}
+#| label: get-flights
+#| echo: true
+#| message: false
+#| cache: true
+import pandas as pd
+import seaborn as sns
+flights = sns.load_dataset('flights')
+```
+
+```{r}
+#| label: get-flights-in-R
+#| echo: true
+#| message: false
+#| fig-width: 7
+#| fig-height: 3
+#| output-location: slide
+library(ggplot2)
+ggplot(py$flights, aes(year, passengers)) + geom_point() + geom_jitter()
+```
+
