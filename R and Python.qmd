@@ -35,18 +35,17 @@ First thing is to configure the Python environment we want to use - an example w
 #| echo: true
 #| message: false
 library(reticulate)
-# options(reticulate.conda_binary = "C:/Users/mweber/.conda")
+options(reticulate.conda_binary = "C:/Users/mweber/.conda")
 
 use_condaenv(condaenv = "C:/Users/mweber/.conda/envs/geo", required = TRUE)
 ```
 
-## Python in R Markdown
+## Python in R 
 We can run a Python chunk and access results in an R chunk
 ```{python}
 #| label: get-flights
 #| echo: true
 #| message: false
-#| cache: true
 import pandas as pd
 import seaborn as sns
 flights = sns.load_dataset('flights')
@@ -58,8 +57,53 @@ flights = sns.load_dataset('flights')
 #| message: false
 #| fig-width: 7
 #| fig-height: 3
-#| output-location: slide
+#| output-location: slide 
 library(ggplot2)
 ggplot(py$flights, aes(year, passengers)) + geom_point() + geom_jitter()
 ```
+## R in Python
+
+- We can run an R chunk and access the results in a Python chunk
+- First read in Palmer Penguins data in R
+
+```{r}
+#| label: penguins
+#| echo: true
+#| warning: false
+#| message: false
+library(palmerpenguins)
+data("penguins")
+```
+
+## Access the data in Python
+```{python}
+#| echo: true
+#| message: false
+penguins_py = r.penguins
+penguins_py.info()
+```
+
+## Plot the data in Python
+```{python}
+#| echo: true
+#| message: false
+#| output-location: slide 
+import matplotlib.pyplot as plt
+
+penguins_py.plot(x='bill_depth_mm', y='flipper_length_mm', kind='scatter')
+plt.show()
+```
+
+## Import Python modules
+We can work directly with Python modules, data and classes in R via the `$` operator
+```{r}
+os <- import("os")
+os$listdir()
+```
+
+## Python REPL
+```{r}
+
+```
+
 
