@@ -466,7 +466,7 @@ mapview::mapview(unemployment_multnomah, zcol = "T_UNEMPPCT")
 
 ## COGs
 
-::: columns
+::::: columns
 ::: {.column width="50%"}
 -   COGs are just raster data representing a slice in time of gridded data such as digital elevation models (DEMs) or land cover or climate
 :::
@@ -474,7 +474,7 @@ mapview::mapview(unemployment_multnomah, zcol = "T_UNEMPPCT")
 ::: {.column width="50%"}
 ![](tile-diagram.png)
 :::
-:::
+:::::
 
 ## STAC resources in R using `rstac`
 

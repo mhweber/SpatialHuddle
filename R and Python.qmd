@@ -102,8 +102,8 @@ os$listdir()
 ```
 
 ## Python REPL
-```{r}
-
+```{python}
+import os
 ```
 
 
