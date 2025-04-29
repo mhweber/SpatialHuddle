@@ -1,0 +1,70 @@
+---
+title: "Positron"
+subtitle: "A Next Generation IDE from Posit"
+author: "Marc Weber"
+date: "April 28, 2025"
+format: revealjs
+embed-resources: true
+editor: visual
+execute: 
+  eval: true
+  error: false
+  echo: true
+  warning: false
+  include: true
+  progress: true
+---
+
+## First, A Caveat
+
+- Most material in these slides is borrowed shamelessly from the [Positron presentations](https://youtu.be/8uRcB34Hhsw) for the [2024 Posit conference](https://posit.co/blog/five-highlights-from-posit-conf-2024/)
+
+## What is Positron?
+
+- [Positron](https://github.com/posit-dev/positron#readme) is a next-generation data science IDE (as opposed to software engineer IDE)
+  - Code-first mentality
+  - A polyglot IDE where you can do all your data science (currently support for just R and Python)
+  - Most IDEs out there built primarily for just one language (i.e. RStudio, Spyder, MATLAB)
+  - Uses languages as 'language packs' on the backend - highly extensible
+
+## Why Positron?
+
+- You use more than one language for data science
+- Extensible and familiar
+- Design inspired by RStudio
+- Fundamentals based on OpenOSS - the open-source foundation of VSCode
+
+## What does it look like?
+::::: columns
+::: {.column width="40%"}
+- [How / where running code]{style="color:lightblue;"}
+- [File you're running]{style="color:pink;"}
+- [Sandbox for development]{style="color:blue;"}
+- [Panes to understand code / data]{style="color:green;"}
+:::
+
+::: {.column width="60%"}
+![](positron_panes.png){height=600, width=600}
+:::
+:::::
+
+## What does it look like?
+::::: columns
+::: {.column width="40%"}
+- [How / where running code]{style="color:lightblue;"}
+- [File you're running]{style="color:pink;"}
+- [Sandbox for development]{style="color:blue;"}
+- [Panes to understand code / data]{style="color:green;"}
+:::
+
+::: {.column width="60%"}
+![](positron_panes2.png){height=600, width=600}
+:::
+:::::
+
+
+  
+
+
+
+
