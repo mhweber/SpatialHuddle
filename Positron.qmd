@@ -5,7 +5,6 @@ author: "Marc Weber"
 date: "April 28, 2025"
 format: revealjs
 embed-resources: true
-editor: visual
 execute: 
   eval: true
   error: false
@@ -32,7 +31,7 @@ execute:
 -   You can use more than one language easily and seamlessly
 -   Extensible and familiar
 -   Design inspired by RStudio
--   Fundamentals based on OpenOSS - the open-source foundation of VSCode{r} install.packages('ggplot2')
+-   Fundamentals based on OpenOSS - the open-source foundation of VSCode
 
 ## What does it look like?
 
@@ -67,23 +66,77 @@ execute:
 ## What does it look like?
 
 ![](MyPositronSession.png)
-## How does it work?
 
-::::: columns
-::: {.column width="40%"}
-- Extensibility:  languages are not 'baked in' - they come as 'language 'packs'
-- Programming languages communicate through an API with the IDE
-- Switch between languages and language versions easily in same session
-- 
-:::
+## How does it work? Extensibility
+
+-   Extensibility: languages are not 'baked in' - they come as 'language 'packs'
+-   Programming languages communicate through an API with the IDE
+-   Switch between languages and language versions easily in same session using the interpreter selector
 
 ::: {.column width="60%"}
 ![](interpreter_selecter.png){height="600," width="600"}
 :::
-:::::
 
-## What does it look like?
--database connections
--next-gen data explorer - advanced filtering, huge data loads
--variables pane
--plot iteration
+## How Does it Work? Next-Gen Data Explorer
+
+-   Poitron has a next-generation data explorer built in
+
+![](DataExplorer.png)
+
+## What does it look like? Next-Gen Data Explorer
+
+![](DataExplorer2.png)
+
+## What does it look like? Advanced Filtering in Data Explorer
+
+![](Filtering.png)
+
+## Why a New IDE Rather Than Enhancing RStudio?
+
+-   RStudio is a two-process system
+
+-   Everything in the main RStudio window is one process that runs R, saves files, generating plots, everything else
+
+    -   This is why RStudio bogs down when big R processes running
+
+-   Outside the main RStudio window is Electron, the chrome 'frame' around RStudio
+
+## Why a New IDE Rather Than Enhancing RStudio?
+
+![](LimitRstudio.png)
+
+## Advantage of a Whole New IDE
+
+-   Positron is a fork of CodeOSS, the open source foundation for VSCode
+
+-   Taking CodeOSS Foundation and tooling it out for Data Science
+
+    -   Great data explorer
+
+    -   Environment selections
+
+    -   Plot and visualization panes
+
+## Advantage of a Whole New IDE
+
+-   In Positron, R and Python are *extensions* the communicate with Positron through it's API
+
+-   In RStudio, the IDE *is itself* part of the R process, so you get this:
+
+![](Rcrash.png)
+
+## How Positron Works as a Polyglot IDE
+
+![](Jupyter.png)
+
+## How Positron Works as a Polyglot IDE
+
+![](Ark.png)
+
+## Extensions - Lots of Them!
+
+![](Extensions.png)
+
+## Extensions - Git in Positron
+
+![](GitPositron.png)
