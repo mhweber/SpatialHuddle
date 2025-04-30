@@ -29,16 +29,10 @@ execute:
 
 ## Why Positron?
 
--   You use more than one language for data science
+-   You can use more than one language easily and seamlessly
 -   Extensible and familiar
 -   Design inspired by RStudio
 -   Fundamentals based on OpenOSS - the open-source foundation of VSCode{r} install.packages('ggplot2')
-
-```{r}
-library(ggplot2)
-library(reticulate)
-ggplot(mpg, aes(cty, hwy)) + geom_point() + facet_grid(year ~ drv)
-```
 
 ## What does it look like?
 
@@ -69,3 +63,27 @@ ggplot(mpg, aes(cty, hwy)) + geom_point() + facet_grid(year ~ drv)
 ![](positron_panes2.png){height="600," width="600"}
 :::
 :::::
+
+## What does it look like?
+
+![](MyPositronSession.png)
+## How does it work?
+
+::::: columns
+::: {.column width="40%"}
+- Extensibility:  languages are not 'baked in' - they come as 'language 'packs'
+- Programming languages communicate through an API with the IDE
+- Switch between languages and language versions easily in same session
+- 
+:::
+
+::: {.column width="60%"}
+![](interpreter_selecter.png){height="600," width="600"}
+:::
+:::::
+
+## What does it look like?
+-database connections
+-next-gen data explorer - advanced filtering, huge data loads
+-variables pane
+-plot iteration
