@@ -67,14 +67,14 @@ execute:
 ## What does it look like?
 
 ![](MyPositronSession.png)
-## How does it work?
+
+## How does it work? Extensibility
 
 ::::: columns
 ::: {.column width="40%"}
-- Extensibility:  languages are not 'baked in' - they come as 'language 'packs'
-- Programming languages communicate through an API with the IDE
-- Switch between languages and language versions easily in same session
-- 
+-   Extensibility: languages are not 'baked in' - they come as 'language 'packs'
+-   Programming languages communicate through an API with the IDE
+-   Switch between languages and language versions easily in same session using the interpreter selector
 :::
 
 ::: {.column width="60%"}
@@ -82,8 +82,18 @@ execute:
 :::
 :::::
 
-## What does it look like?
--database connections
--next-gen data explorer - advanced filtering, huge data loads
--variables pane
--plot iteration
+## How Does it Work? Next-Gen Data Explorer
+
+-   Poitron has a next-generation data explorer built in
+
+![](DataExplorer.png)
+
+## What does it look like? Next-Gen Data Explorer
+
+![](DataExplorer2.png)
+
+## What does it look like? Advanced Filtering in Data Explorer
+
+![](Filtering.png)
+
+-database connections -next-gen data explorer - advanced filtering, huge data loads -variables pane -plot iteration
