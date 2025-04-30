@@ -132,3 +132,11 @@ execute:
 ## How Positron Works as a Polyglot IDE
 
 ![](Ark.png)
+
+## Extensions - Lots of Them!
+
+![](Extensions.png)
+
+## Extensions - Git in Positron
+
+![](GitPositron.png)
